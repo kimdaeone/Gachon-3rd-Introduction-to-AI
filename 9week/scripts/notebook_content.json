@@ -1,0 +1,171 @@
+{
+  "00_WISDM_데이터_이해와_분석.ipynb": [
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": "# 00. WISDM 실험 데이터 이해와 분석\n**9week · 2026-11-02 · 데이터 검사 완료 / 모델 학습 전**\n\n이 문서는 “무슨 데이터를 분류하는가?”, “원본에 어떤 문제가 있는가?”, “공정하게 정확도를 비교하려면 무엇을 고정해야 하는가?”를 설명한다. 다음 문서는 [01. CNN 5종 원리와 조합 설계](01_CNN_5종_원리와_조합_설계.ipynb)이다.\n\n> **읽는 기준:** ‘실측’은 제공된 압축파일을 검사한 결과, ‘설명서’는 배포 자료의 명시 내용, ‘제안’은 앞으로 검증할 실험 설정이다. 수치 파싱 가능 레코드 수를 최종 학습 데이터 수로 해석하지 않는다.\n\n모델 정확도, Macro F1, 최적 조합은 **아직 미측정**이다. 이 단계에서 기대 정확도를 임의로 설정하지 않는다."
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": "## 1. 연구 목표와 분류 단위\n**학습에 참여하지 않은 사용자의 가속도 구간을 보고 6가지 행동을 분류**하는 것이 주 목표다. 개인별로 이미 학습된 사용자의 다음 행동을 예측하는 개인화 실험과는 평가 목적이 다르다.\n\n원본 레코드 하나는 특정 시점의 가속도 측정값이다. CNN의 분류 단위는 레코드 하나가 아니라 연속 레코드로 구성한 **윈도우**다. 따라서 100만 레코드가 있다는 말은 독립적인 학습 사례가 100만 개라는 뜻이 아니다. 독립적인 사용자도 36명뿐이다.\n\n| 구분 | 의미 | 이번 연구의 사용 |\n|---|---|---|\n| 원본 레코드 | 한 시점의 센서 측정 | 데이터 품질 검사 |\n| 윈도우 | 연속된 여러 시점 | CNN 입력 및 행동 정답 단위 |\n| 사용자 | 측정 참여자 | train/validation/test 분리 단위 |\n| 연속 구간 | 사용자·행동과 시간 연속성이 유지되는 범위 | 윈도우가 넘으면 안 되는 경계 |\n\n시험 사용자 데이터는 구조·전처리·하이퍼파라미터 선택에 사용하지 않는다."
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": "## 2. 출처와 파일 선택\n사용자가 제공한 파일은 `WISDM_ar_latest.tar.gz`이고, 압축 내부 디렉터리는 `WISDM_ar_v1.1`이다. 압축 내부를 직접 읽었으며 원본을 수정하거나 원시 데이터를 새 폴더에 복제하지 않았다.\n\n이 자료는 **WISDM Activity Recognition v1.1**이다. 실험실의 통제된 조건에서 수집된 자료이며, 다른 버전의 스마트폰·스마트워치 WISDM 자료나 실환경 Actitracker 자료와 혼동하지 않는다. [공식 데이터 페이지](https://www.cis.fordham.edu/wisdm/dataset.php)\n\n| 파일 | 내용 | 이번 연구 |\n|---|---|---|\n| `WISDM_ar_v1.1_raw.txt` | 사용자·행동·시간·3축 가속도 | 주 입력 |\n| `WISDM_ar_v1.1_transformed.arff` | 200개 측정값, 명목 10초에서 만든 통계 특징; 설명서상 5,424개 사례·46개 속성 | 주 CNN 입력으로 사용하지 않음 |\n| `*_raw_about.txt`, `*_trans_about.txt`, `readme.txt` | 형식, 수집 정보, 인용 안내 | 출처와 파싱 기준 |\n\n통계 특징을 시간순 센서 샘플처럼 Conv1D에 넣으면 특징 열의 순서에 인위적인 이웃 관계를 부여하게 된다. 이번 목적은 원시 시계열의 패턴을 학습하는 것이므로 raw를 사용한다.\n\n배포 설명서는 명목 샘플링을 **20Hz**, 즉 약 **50ms마다 1회**로 안내한다. 중력 성분이 포함된 가속도이며, 설명서의 단위 설명은 “10이 약 1g”이다. 이를 정밀하게 보정된 SI 값이라고 가정하지 않는다."
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": "## 3. 컬럼, 입력 shape, 정답\n원본 형식:\n\n```text\nuser,activity,timestamp,x-acceleration,y-acceleration,z-acceleration;\n33,Jogging,49105962326000,-0.6946377,12.680544,0.50395286;\n```\n\n| 필드 | 역할 | 모델 입력 포함 |\n|---|---|---|\n| user | 사용자 ID 1~36, 분할 및 사용자별 평가 | 아니오 |\n| activity | 6개 행동 정답 | 입력이 아닌 학습 target |\n| timestamp | 일반적으로 기기 가동 후 nanosecond, 시간 연속성 확인 | 아니오 |\n| x, y, z | 가속도 3개 축 | 예 |\n\n첫 실험 입력 제안은 `(batch, 128, 3)`이다. 128은 시간 방향 샘플 수, 3은 센서 채널 수다. 20Hz가 유지된다는 가정에서 윈도우 길이를 관례상 128/20 = **6.4초**로 부른다. 실제 첫 샘플과 마지막 샘플 사이 간격은 균일 샘플링이면 127/20초이며, 시간 이상 구간에서는 실제 길이를 따로 확인해야 한다.\n\n첫 합성곱 뒤 `(batch,128,32)`가 되면 32개 채널은 센서 32개가 아니라 **학습된 특징 32개**다. 기존 UCI HAR 노트북의 `(128,9)`를 그대로 사용할 수 없다."
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": "## 4. 파싱 규칙과 수치의 의미\n검사 코드는 [scripts/analyze_wisdm.py](scripts/analyze_wisdm.py)에 분리했다. 학습 코드는 포함하지 않는다.\n\n1. 원본을 세미콜론 또는 줄바꿈(CR/LF)으로 나누고 빈 조각을 제외한다.\n2. 필드가 7개이며 마지막 필드만 비어 있으면 마지막 빈 필드 1개를 제거한다.\n3. 나머지는 6개 필드, 사용자 1~36, 알려진 행동명, 정수 timestamp, 유한한 가속도 3개를 요구한다.\n4. 실패 레코드는 원문과 레코드 번호를 기록하고 인접 시간 비교를 끊는다.\n5. timestamp가 0이거나 역행하더라도 이번 **품질 검사 집계**에는 남긴다. 중복도 아직 제거하지 않는다.\n\n| 실측 항목 | 수 |\n|---|---:|\n| 비어 있지 않은 후보 레코드 | 1,098,209 |\n| 수치 파싱 가능 레코드 | 1,098,208 |\n| 빈 일곱 번째 필드 제거로 복구 | 11,733 |\n| 필수 가속도 값 누락으로 파싱 실패 | 1 |\n| 모든 6개 필드가 같은 중복의 추가 출현 횟수 | 66,820 |\n\n합계 검증: **1,098,208 + 1 = 1,098,209**. 끝 쉼표 복구 건수는 파싱 가능 레코드에 포함되므로 더하지 않는다.\n\n누락 사례는 `11,Walking,1867172313000,4.4,4.4,`로 z가 비어 있다. 끝 쉼표가 있다고 모두 제거하는 방식은 이 결측과 형식 오류를 혼동할 수 있다.\n\n중복은 숫자로 변환한 `(user, activity, timestamp, x, y, z)` 튜플 기준이다. 동일 튜플이 세 번 나오면 추가 출현 2건으로 센다. 이는 “중복 그룹 수”도, “연속 중복만의 수”도 아니다. 0 timestamp나 세션 반복과의 관계를 확인하기 전 일괄 삭제하지 않는다."
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": "## 5. 공식 수치와 로컬 파일 실측이 다른 이유를 어떻게 다룰 것인가?\n공식 요약의 총 레코드 수는 **1,098,207**, 위 규칙으로 읽은 로컬 파일의 유효 수는 **1,098,208**이다. 공식 표에 맞추려고 임의로 행을 제거하지 않는다.\n\n| 행동 | 공식 설명서 | 로컬 수치 파싱 가능 | 차이 |\n|---|---:|---:|---:|\n| Walking | 424,400 | 424,399 | -1 |\n| Jogging | 342,177 | 342,179 | +2 |\n| Upstairs | 122,869 | 122,869 | 0 |\n| Downstairs | 100,427 | 100,427 | 0 |\n| Sitting | 59,939 | 59,939 | 0 |\n| Standing | 48,395 | 48,395 | 0 |\n| 합계 | 1,098,207 | 1,098,208 | +1 |\n\nWalking의 차이는 확인된 결측 1건과 일치한다. **Jogging의 +2가 발생한 배포·집계상의 원인은 아직 확정하지 않았다.** 중복 66,820건과 이 +2를 같은 문제라고 설명하지 않는다. 현재 보고서는 로컬 파일 fingerprint와 파서 규칙에 근거해 재현 가능한 실측을 사용한다.\n\n[검사 JSON](artifacts/data_audit.json)에 압축파일과 raw의 SHA-256을 기록했다. 다른 환경에서 결과가 다르면 파일 hash와 파서부터 비교한다."
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": "## 6. 행동 분포: Accuracy만으로 부족한 이유\n![행동별 레코드 분포](artifacts/class_distribution.png)\n\nWalking과 Jogging을 합치면 약 **69.8%**다. 이는 정제 전 **센서 레코드 분포**이며, 최종 윈도우 분포와 같다고 보장되지 않는다.\n\nAccuracy는 전체 윈도우 중 맞힌 비율이다. 데이터가 많은 행동에서 개선되고 Standing 같은 소수 행동에서 악화되어도 Accuracy는 오를 수 있다. 항상 Walking이라고 답하는 레코드 수준 기준의 비율은 약 38.6%지만, 이를 향후 윈도우 기반 모델의 baseline 정확도로 그대로 사용하지 않는다.\n\n**평가 제안**\n- Accuracy: 전체 예측 정확도.\n- Macro F1: 6개 행동의 F1을 같은 비중으로 평균. 모델 선택의 기본 지표로 사용.\n- 행동별 precision/recall/F1, confusion matrix: 어떤 행동에서 오탐·미탐이 생기는지 확인.\n- 사용자별 성능: 전체 평균이 일부 사용자 실패를 가리지 않는지 확인.\n\nClass weight는 **train 윈도우 분포**로만 계산하고, 구조 비교 후 별도 실험으로 검증한다. 전체 데이터 분포로 가중치를 계산하지 않는다."
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": "## 7. 사용자별 분포: 사용자 분할에 필요한 근거\n![사용자와 행동의 분포](artifacts/subject_coverage.png)\n\n36명 모두 레코드는 있지만 **17명은 6가지 행동 중 일부가 없다.** 그림의 빨간 0은 해당 사용자의 그 행동이 없음을 뜻한다. 예를 들어 사용자 9는 Walking만, 사용자 2와 25는 Walking/Jogging만 있다.\n\n따라서 사용자 수만 맞춰 무작위로 나누면 특정 split의 행동 분포가 심하게 치우치거나 행동이 누락될 수 있다. 사용자 단위 분할을 유지하면서 각 split의 행동 존재 여부와 윈도우 수를 검증해야 한다.\n\n사용자별 전체 목록은 [data_audit.json](artifacts/data_audit.json)의 `subject_class_counts`, `missing_classes_by_subject`에 있다.\n\n**해석의 한계:** 이 자료에서 좋은 성능이 나와도 다른 기기, 휴대 위치, 자유로운 실생활 조건의 성능을 바로 보장하지 않는다. 사용자 일반화 실험과 실환경 일반화 실험은 구별한다."
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": "## 8. 시간 품질: 20Hz라고 모든 간격이 50ms는 아니다\n![양수 시간 간격 분포](artifacts/time_intervals.png)\n\n위 그래프는 **0 < 간격 ≤ 250ms인 쌍만 표시**한다. 0·음수·큰 공백은 아래 표로 별도 보고한다. 그래프만 보고 모든 레코드가 정상이라고 해석하지 않는다.\n\n| 항목 | 실측 |\n|---|---:|\n| timestamp=0인 레코드 | 12,845 |\n| 같은 사용자·행동의 원본 인접 쌍 | 1,097,803 |\n| 그중 시간차=0 | 47,588 |\n| 그중 시간차<0 | 7,467 |\n| 그중 시간차>250ms | 8,022 |\n| 양수 시간차 중앙값 | 49.988ms |\n| 양수 시간차 99백분위 | 약 120.148ms |\n\n레코드 수와 인접 쌍 수는 다른 단위다. timestamp=0인 레코드 수를 나머지 수치와 합산하지 않는다. 인접 쌍은 사용자·행동이 바뀌거나 파싱에 실패하면 연결하지 않았다. 공식 session ID가 없어 같은 사용자·행동이라고 같은 세션이라는 보장은 없다.\n\n**전처리 제안:** 사용자/행동 변경, 결측, timestamp 0·중복·역행, 큰 공백에서 경계를 만든다. 전체 파일을 timestamp로 정렬해 서로 다른 세션을 연결하지 않는다. 250ms는 검사 임계값이며 확정된 최적 전처리 임계값이 아니다.\n\n보수적으로 경계를 나누면 짧은 구간이 많이 생길 수 있다. 최종 정책 선택 전 반드시 **사용자·행동별 남은 레코드/윈도우 수**를 비교해야 한다. 원본 순서 기반 윈도우 정책과의 비교는 validation에서만 수행하고, 최종 test 결과를 보고 정책을 바꾸지 않는다."
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": "## 9. 가속도 범위와 정규화의 의미\n아래는 전체 수치 파싱 가능 레코드의 기술 통계다. 학습용 정규화 통계로 재사용하지 않는다.\n\n| 축 | 최솟값 | 1백분위 | 중앙값 | 99백분위 | 최댓값 |\n|---|---:|---:|---:|---:|---:|\n| x | -19.61 | -19.04 | 0.27 | 19.00 | 19.95 |\n| y | -19.61 | -12.79 | 7.93 | 19.57 | 20.04 |\n| z | -19.80 | -11.99 | 0.00 | 13.33 | 19.61 |\n\n축별 분포가 다르고 중력 성분도 포함된다. 이 통계만으로 특정 축이 더 중요하다거나 신호가 포화됐다고 단정하지 않는다. 설명서의 약 -20~20 범위를 약간 넘는 값도 있으므로 자동 clipping하지 않는다.\n\n**제안:** train의 정제된 원본 샘플만으로 축별 평균·표준편차를 계산한 후 validation/test에 같은 값을 적용한다. 겹친 윈도우에서 같은 샘플이 반복 계산되지 않게 원본 샘플을 기준으로 한다.\n\n윈도우마다 평균을 빼면 절대적인 자세·중력 방향 정보가 사라질 수 있다. 초기 기본값으로 사용하지 않고 별도 전처리 실험으로 둔다. 가속도 크기 채널 추가, 회전 증강, 보간 역시 기본 구조 비교와 동시에 바꾸지 않는다."
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": "## 10. 데이터에서 모델 평가까지의 제안 과정\n```text\n원본 형식 복구 및 품질 기록\n→ 사용자 단위 train / validation / test 분할\n→ 각 split 안에서 연속 구간 확인 및 정제\n→ train 원본 샘플로 정규화 통계 계산\n→ 구간 안에서만 윈도우 생성\n→ 동일 입력·학습 조건으로 모델 비교\n→ validation으로 선택\n→ 확정한 모델을 잠근 test에서 최종 평가\n```\n\n| 항목 | 시작 제안 | 이유 / 상태 |\n|---|---|---|\n| 사용자 분할 | 24/6/6명 | 예시 비율; ID 목록은 아직 미선정 |\n| 윈도우 길이 | 128 샘플 | 명목 6.4초; 64/200은 후속 비교 |\n| stride | train 64, validation/test 128 | 학습 다양성 확보, 평가 중복 감소 |\n| 경계 | 사용자·행동·시간 연속성 | 서로 다른 구간이 한 입력으로 섞이지 않게 함 |\n| 보간 | 초기 baseline에서는 사용하지 않음 | 임의의 신호 생성 효과와 구조 효과 분리 |\n| 표준화 | train 기준 축별 통계 | 평가 데이터의 정보 사용 방지 |\n| 클래스 불균형 처리 | 첫 구조 비교는 동일한 무가중 손실 | 가중치 효과는 독립 검증 |\n| 모델 선택 | validation Macro F1 | 소수 행동 성능도 반영 |\n| 최종 보고 | Accuracy, Macro F1, 행동별/사용자별 성능 | 개선 원인 및 편차 확인 |\n\n행동 label로 경계를 나누는 것은 정답이 주어진 정적 HAR 분류 benchmark의 설정이다. 실제 스트리밍 환경에서 행동 전환을 탐지하는 과제와는 다르다. 향후 전환 구간 실험은 별도로 정의한다.\n\n겹치는 윈도우를 만든 뒤 무작위 분할하면 거의 같은 신호가 학습·평가에 함께 들어갈 수 있다. **사용자 분할을 먼저 수행**하는 이유다."
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": "## 11. 분석 코드가 연구에 기여하는 방식과 재현\n설명과 코드를 분리했지만 각 계산의 목적은 명확히 연결한다.\n\n| 구현 기능 | 필요한 이유 | 연결되는 연구 판단 |\n|---|---|---|\n| 엄격한 파싱 + 끝 쉼표 복구 | 오류 때문에 정상 데이터를 대량 손실하지 않게 함 | 비교 모델에 동일 데이터 제공 |\n| 사용자×행동 집계 | 누락 행동과 불균형 확인 | 분할 가능성, Macro F1 해석 |\n| 시간차 및 중복 검사 | 잘못된 윈도우와 반복 사례 파악 | 성능 과대평가 및 전처리 영향 점검 |\n| 가속도 기술 통계 | 분포와 값 범위 확인 | 정규화·clipping 가정 검토 |\n| SHA-256 및 JSON 저장 | 같은 데이터·규칙임을 확인 | 반복 연구의 재현성 |\n| 그래프 생성 | 큰 표에서 패턴 확인 | 편향과 품질 문제 설명 |\n\n저장소 루트에서 실행:\n\n```powershell\npython -m pip install numpy matplotlib nbformat\npython 9week/scripts/analyze_wisdm.py\n```\n\n다른 위치의 압축파일을 사용하려면 `--archive \"절대경로\"`, 별도 결과 폴더는 `--output \"경로\"`를 지정한다. 파일 기본 경로는 제공된 Downloads 경로다. 원본은 읽기만 하며 집계와 그림만 출력한다.\n\n그림은 이 노트북에 첨부되어 있어 노트북만 열어도 표시된다. 원본 PNG와 JSON은 `artifacts`에 남긴다. 분석을 재실행한 뒤 문서를 다시 생성하려면 `python 9week/scripts/build_notebooks.py`를 실행한다.\n\n이 검사는 파싱·집계 검사이지 최종 학습 전처리가 아니다. 정제 전 수치가 바뀌면 문서와 그림도 함께 갱신해야 한다."
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": "## 12. 현재 결론, 남은 결정, 다음 문서\n**확인 완료:** 데이터 형식, 36명·6행동·3축 구성, 파싱 가능 수, 형식 복구와 결측, 불균형, 사용자별 행동 누락, 시간 이상, 정확한 필드 중복, 가속도 범위.\n\n**아직 결정/측정하지 않은 것:** 최종 중복·시간 이상 처리 정책, 정제 후 윈도우 수, 사용자 split ID, 학습 결과와 최적 조합. 사용자별 유지율을 확인하고 학습 전 프로토콜에 고정해야 한다.\n\n다음 [01 문서](01_CNN_5종_원리와_조합_설계.ipynb)는 이 데이터의 특성에 어떤 CNN 구성 요소가 대응하는지와, 각 조합의 효과를 구분하는 실험을 설명한다.\n\n## 참고 자료\n- WISDM Lab, [Activity Recognition Dataset](https://www.cis.fordham.edu/wisdm/dataset.php): 버전·공식 통계·자료 인용 안내. 확인일 2026-11-02.\n- Kwapisz, J. R., Weiss, G. M., & Moore, S. A. (2010 workshop), [Activity Recognition using Cell Phone Accelerometers](https://www.cis.fordham.edu/wisdm/public_files/sensorKDD-2010.pdf): 데이터 제공처가 인용을 요청한 원 연구. 서지 연도는 배포 readme 표기를 따랐다.\n- 원본 `readme.txt`, `*_raw_about.txt`, `*_trans_about.txt`의 내용을 [source_descriptions.json](artifacts/source_descriptions.json)에 보존했다.\n- 현재 파일의 분석 결과: [data_audit.json](artifacts/data_audit.json). 웹의 공식 숫자가 아니라 이 로컬 파일의 실측을 분석 표에 사용했다."
+    }
+  ],
+  "01_CNN_5종_원리와_조합_설계.ipynb": [
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": "# 01. CNN 5종의 원리와 조합 설계\n**9week · 2026-11-02 · 연구 설계 / 성능 미측정**\n\n먼저 [00. WISDM 데이터 이해와 분석](00_WISDM_데이터_이해와_분석.ipynb)을 읽는다. 이 문서는 **각 요소의 역할 → 조합 이유 → 과정 → 비교 실험 → 결과 해석 → 후속 개선**을 연결한다.\n\n사용하는 5종은 ResNet, SENet의 SE 블록, Inception, Depthwise Separable Convolution, CBAM이다. 모두 완성된 분류기 다섯 개를 뜻하지 않는다. backbone 구조·attention 블록·합성곱 연산을 결합하여 1D 행동 분류기를 설계한다.\n\n> **근거의 수준:** 원 논문의 작동 원리, 이번 연구에서 선택한 1D 구현 방식, WISDM에서 검증할 가설을 구분한다. 이미지 benchmark의 개선 수치를 WISDM의 예상 정확도로 옮기지 않는다.\n\n현재 Accuracy/Macro F1은 **미측정**이다. “SE를 쓰면 몇 % 오른다” 같은 수치는 학습 전에는 제시할 수 없다."
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": "## 1. 데이터 특성에서 연구 질문으로\n| 00에서 확인한 조건 | 모델 설계에서 검토할 질문 | 연결되는 요소 |\n|---|---|---|\n| 시간에 따라 변하는 3축 가속도 | 짧고 긴 패턴을 함께 포착할 수 있는가? | Inception |\n| 여러 특징 변환을 쌓는 CNN | 깊이를 늘렸을 때 최적화가 어려워지는가? | ResNet |\n| 6개 행동·사용자에 따라 다른 입력 | 현재 구간에 중요한 특징이 달라지는가? | SE |\n| 구간 내 정보의 중요도가 다를 가능성 | 어떤 시점의 특징이 더 중요한가? | CBAM 1D |\n| 여러 kernel branch의 계산 비용 | 같은 성능을 더 적은 비용으로 유지하는가? | Depthwise Separable Conv |\n| 불균형·36명의 제한된 사용자 다양성 | 평균 정확도뿐 아니라 소수 행동과 새 사용자에 유효한가? | 분할·평가 설계 |\n\n위 표의 “어떤 특징·시점이 중요하다”는 부분은 **아직 학습 결과로 입증하지 않은 가설**이다. 어떤 블록도 timestamp 오류, 데이터 누수, 누락 행동을 자동으로 해결하지 않는다.\n\n연구의 중심 질문:\n> Inception과 residual 연결에 attention을 더하면 새로운 사용자의 Accuracy와 Macro F1이 개선되는가? 그 개선을 separable 합성곱을 사용한 경량 구조에서도 유지할 수 있는가?"
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": "## 2. 공통 표기와 구조\n입력은 `(B,T,3)`, 초기 제안은 `T=128`이다. 합성곱 뒤의 `C`는 학습 특징 채널 수다.\n\n```text\n가속도 (B,128,3)\n→ stem Conv1D (예: 32채널)\n→ 특징 추출 블록 반복\n→ GlobalAveragePooling1D\n→ Dropout\n→ Dense(6, softmax)\n```\n\n- **Conv1D:** 시간 주변과 입력 채널을 결합해 특징을 만든다.\n- **Concatenate:** 같은 시간 길이의 branch 출력을 채널 방향으로 이어 붙인다. 8채널×4 branch면 32채널.\n- **Add:** 같은 shape의 두 tensor를 원소별 더한다. 채널 수는 늘지 않는다.\n- **Projection:** kernel 1의 Conv1D 등으로 Add에 필요한 채널/stride를 맞춘다.\n- **Attention:** 이미 만든 특징에 가중치를 적용한다. 별도의 센서를 추가하는 것이 아니다.\n- **GlobalAveragePooling1D:** 시간 축을 요약해 작은 분류 head를 만든다. 모든 모델에서 같은 방식을 유지한다.\n\n구조 설명에서는 BN/활성화 세부 배치를 간략화한다. 구현 단계에는 그 순서도 고정하여 블록 변경 외의 차이가 섞이지 않게 한다."
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": "## 3. ResNet — 필요한 변화량을 학습하는 경로\n**해결하려는 문제:** 블록을 깊게 쌓는다고 학습이 항상 좋아지지는 않는다. residual 연결은 블록 입력을 직접 전달하는 경로를 만들어 최적화를 돕는다. [R1]\n\n$$y=\\operatorname{ReLU}(P(x)+F(x))$$\n\n`F(x)`는 학습할 변환이고, shape가 같으면 `P(x)=x`다. shape가 다르면 projection을 사용한다.\n\n```text\nx ───────────────────┐\n└→ Conv → BN → ReLU   │\n   → Conv → BN ───── Add → ReLU\n```\n\n이번 연구에서는 **같은 깊이와 폭을 가진 기본 CNN에 shortcut을 켜고 끄는 비교**를 만든다. 그래야 성능 차이를 단순한 깊이·파라미터 증가와 구분할 수 있다.\n\n기대: 반복적인 특징 정제의 학습을 쉽게 할 가능성. 한계: 얕은 모델에서는 이득이 작을 수 있고, shortcut이 과적합을 막거나 gradient 문제를 완전히 없애는 것은 아니다. 이 설명은 WISDM 결과가 아닌 설계 원리다."
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": "## 4. Inception — 여러 시간 규모의 특징을 병렬 추출\n**해결하려는 문제:** 행동 분류에 적절한 패턴 길이를 단일 kernel로 미리 정하기 어렵다. 여러 크기의 합성곱 branch를 병렬로 사용한다. 다중 규모 원리는 [R3], 시계열 적용의 연구 근거는 [R6]을 참고한다.\n\n```text\n                    ┌→ Conv1D k=3  ─┐\n입력 → 1×1 bottleneck ├→ Conv1D k=7  ─┤\n                    └→ Conv1D k=15 ─┤→ Concatenate\n입력 → MaxPool → 1×1 Conv ──────────┘\n```\n\n명목 20Hz의 첫 층에서 kernel 3/7/15는 관례상 약 0.15/0.35/0.75초 규모다. 작은 kernel은 짧은 국소 변화, 큰 kernel은 상대적으로 긴 변화 형태에 반응할 여지를 제공한다. **특정 kernel이 반드시 특정 행동이나 주기를 학습하는 것은 아니다.** 이후 층의 수용영역은 누적된다.\n\nBottleneck은 큰 kernel 앞에서 채널 수를 줄여 계산량을 줄인다. 지나치게 줄이면 표현력이 제한될 수 있다. 정적인 자세 정보나 센서 방향 차이를 다중 kernel만으로 해결할 수는 없다.\n\n이번의 `(3,7,15)`는 시작 제안이지 WISDM 최적값이 아니다. InceptionTime의 전체 앙상블을 재현한다고 주장하지 않고 **Inception 계열의 사용자 정의 단일 1D 모델**로 명시한다."
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": "## 5. SE — 현재 입력에 유용한 특징 채널 재가중\n**해결하려는 문제:** 추출한 특징이 모든 입력에서 같은 비중으로 유용하지 않을 수 있다. SE는 각 채널을 시간 평균으로 요약해 입력별 채널 가중치를 계산한다. [R2]\n\n$$z_c=\\frac1T\\sum_t U_{t,c},\\qquad s=\\sigma(W_2\\operatorname{ReLU}(W_1z)),\\qquad \\widetilde U_{t,c}=s_cU_{t,c}$$\n\n```text\nU (B,T,C) → 시간 평균 (B,C) → Dense(C/r) → Dense(C)\n          → sigmoid → (B,1,C) → U와 Multiply\n```\n\n- 가중치는 입력 구간마다 달라지지만, 같은 채널의 모든 시점에는 같은 값을 적용한다.\n- `C/r`는 가중치 계산 경로의 병목이다. 원래 특징 tensor 자체를 `C/r`로 줄이는 것이 아니다.\n- 학습 특징 채널에 적용하므로 “x축을 선택하고 y축을 버린다”로 해석하지 않는다.\n- sigmoid 가중치의 범위는 0~1이다. ‘강조’는 다른 특징 대비 상대적 비중 조절을 뜻하며, 값이 항상 원래보다 커진다는 의미는 아니다.\n\n기대: 입력에 유용한 특징 조합을 조절. 한계: 시간 평균에서 짧은 반응이 약해질 수 있고, 잘못 학습한 가중치는 일반화를 악화시킬 수 있다. SE가 원래 존재하지 않는 특징을 복구하지는 않는다."
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": "## 6. CBAM — 채널 중요도 다음에 시간 위치 중요도\nCBAM의 원 설계는 **channel → spatial attention**이다. 이번 연구에서는 spatial 축을 시간 축으로 옮긴 **channel → temporal attention**을 제안한다. 원 논문의 이미지 결과와 이 1D 변형을 구분한다. [R5]\n\n```text\n입력 특징 U\n→ 시간 평균/최대 pooling + 공유 MLP → 채널 가중치 (B,1,C)\n→ 채널 재가중 U'\n→ 채널 평균/최대 pooling + Conv1D → 시간 가중치 (B,T,1)\n→ 시간 재가중 U''\n```\n\nSE의 질문이 “어떤 특징이 중요한가?”라면, 1D CBAM은 “어떤 특징이며 어느 시점인가?”까지 다룬다. 시간 가중치는 해당 단계에서 채널 전체에 공유된다. 자유로운 `(T,C)` attention 행렬과는 다른 제약을 갖는다.\n\n기대: 특정 시점의 특징이 유용한 경우 개선 가능성. 한계: 순간적인 잡음에 집중하거나 특정 사용자의 타이밍에 과적합할 수 있다. 안정적인 전체 구간 정보가 중요한 경우 시간 attention의 이득이 작을 수 있다.\n\n**중요한 비교상의 차이:** SE와 CBAM은 채널 pooling 방식부터 다르다. 따라서 `SE → CBAM` 교체 결과를 시간 attention만의 효과로 해석할 수 없다. `CBAM channel-only → 전체 CBAM` 비교를 추가해야 시간 부분의 기여를 분리할 수 있다."
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": "## 7. Depthwise Separable Convolution — 시간 처리와 채널 혼합 분리\n일반 Conv1D가 시간·채널을 함께 결합하는 데 비해, separable 연산은 채널별 시간 합성곱 뒤에 1×1 pointwise 합성곱을 적용한다. [R4]\n\n$$N_{regular}=K C_{in}C_{out},\\qquad N_{separable}=K C_{in}+C_{in}C_{out}$$\n\n식은 bias 제외, depth multiplier=1의 조건이다.\n\n| 예: K=15, Cin=Cout=32 | 파라미터 |\n|---|---:|\n| 일반 Conv1D | 15,360 |\n| SeparableConv1D | 1,504 |\n| 해당 연산의 감소율 | 약 90.2% |\n\n전체 모델에서는 stem·projection·attention 등이 남으므로 위 감소율을 그대로 적용하지 않는다.\n\n초기 설계에서는 x/y/z를 결합하는 stem과 1×1 projection을 일반 Conv로 유지하고, Inception의 시간 합성곱 branch만 교체한다. 변경 범위를 제한해 결과를 해석하기 위한 선택이다.\n\n기대: 파라미터·연산량 감소. 한계: 표현 제약으로 성능이 낮아질 수 있으며, 이론적 감소가 실제 장치에서의 지연시간 감소를 보장하지 않는다. 경량화로 과적합이 줄어 정확도가 좋아질 가능성도 있으나 실험 전 사실로 취급하지 않는다."
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": "## 8. 먼저 단독 효과를 확인하는 A0~A5\n| ID | 구성 | 비교 목적 |\n|---|---|---|\n| A0 | 기본 1D CNN | 기준 성능 |\n| A1 | 같은 기본 CNN + residual shortcut | shortcut 효과 |\n| A2 | Inception 1D, residual 없음 | 다중 kernel 구조 효과 |\n| A3 | A0 + SE | 일반 CNN에서 채널 attention 효과 |\n| A4 | A0의 시간 Conv를 separable로 교체 | 일반 CNN의 경량화 효과 |\n| A5 | A0 + CBAM 1D | 일반 CNN에서 CBAM 효과 |\n\n동일 입력·사용자 분할·분류 head·학습 예산을 사용한다. A0/A1은 가능한 한 shortcut 유무만 다르게 하고, A0/A3/A5는 attention 외의 구조를 고정한다. A2는 구조 자체가 달라 같은 출력 채널 수여도 파라미터 수와 수용영역이 달라질 수 있다. 이를 모두 보고한다.\n\nA3가 A0보다 좋았다고 해서 Inception-ResNet에서도 SE가 좋다고 결론 내릴 수 없다. **단독 효과와 결합 효과는 다른 질문**이다."
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": "## 9. 결합 실험 B1~B6의 전체 지도\n| 시간 합성곱 방식 | attention 없음 | SE | CBAM 1D |\n|---|---|---|---|\n| 일반 Inception + ResNet | B1 | B2 | B3 |\n| Depthwise Inception + ResNet | B4 | B5 | B6 |\n\n모든 결합에서 기본 위치는 `특징 추출 → projection → attention → residual Add`로 맞춘다. attention이 없으면 그 단계만 생략한다. 채널 수가 이미 맞는 경우 projection의 유무도 비교 모델에서 일관되게 고정한다.\n\n이 구조는 “6개 중 누가 1등인가” 외에 **attention 효과가 경량화 여부에 따라 달라지는가**를 확인할 수 있게 한다.\n\nSE와 CBAM을 한꺼번에 직렬로 넣는 구성은 초기 실험에서 제외한다. 채널 재가중 역할이 겹치며 개선 원인 해석이 어려워진다. 꼭 필요하다면 기본 효과 확인 후 독립된 추가 실험으로 다룬다."
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": "## 10. B1 — Inception + ResNet\n**데이터와 문제:** WISDM의 행동 신호에서 여러 길이의 패턴이 유용할 수 있으며, 이를 여러 블록에 걸쳐 정제하려 한다.\n\n**조합 이유:** Inception은 다양한 시간 규모의 표현을, residual은 이전 특징에 변환 결과를 더하는 학습 경로를 제공한다. [R1, R3, R6] 이 두 원리를 함께 적용하는 것이 타당하다는 설계 근거이지 이 데이터에서의 상승을 증명하는 근거는 아니다.\n\n```text\nx ──────────────────────────────┐\n└→ Inception → projection ───── Add → ReLU\n```\n\n**과정과 구현 의도**\n1. 여러 kernel branch에서 특징을 추출한다: 단일 규모에만 의존하는 표현을 줄이려는 목적.\n2. Concatenate와 projection으로 특징을 합친다: Add 가능한 표현 크기를 만든다.\n3. shortcut과 더한다: 필요한 변화량을 누적하는 학습 경로를 만든다.\n4. 공통 pooling/head로 분류한다: 분류기의 차이가 결과를 설명하지 않도록 한다.\n\n**검증:** B1−A2는 residual 추가, B1−A1은 다중 규모 구조로의 교체를 본다. 후자는 파라미터와 수용영역도 함께 달라질 수 있다.\n\n**결과 상태:** 미측정. Accuracy, Macro F1, 사용자별 성능, 최적 epoch, 파라미터 수를 기록한다.\n**실패 가능성:** 얕은 모델이라 shortcut 이점이 작거나, 과도한 branch/폭이 과적합을 유발할 수 있다.\n**결과에 따른 개선:** train도 낮으면 최적화와 수용영역을 점검한다. train만 높으면 깊이/폭과 정규화를 검토한다. Inception의 다중 규모 근거를 따라 kernel을 바꿀 수 있지만 validation에서 한 번에 한 요소만 비교한다."
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": "## 11. B2 — Inception + ResNet + SE\n**데이터와 문제:** Inception이 만든 여러 특징이 입력 행동·사용자에 따라 서로 다른 비중으로 유용할 수 있다.\n\n**조합 이유:** 여러 규모의 특징을 만든 뒤 SE로 입력별 채널 비중을 조절한다. 채널 재가중 원리는 [R2]에 근거하며, WISDM에서 B1보다 좋아질지는 가설이다.\n\n```text\nx ───────────────────────────────────┐\n└→ Inception → projection → SE ───── Add → ReLU\n```\n\n**과정과 구현 의도**\n1. Inception 출력 채널을 구성한다.\n2. 시간 평균과 작은 MLP로 채널 중요도를 계산한다.\n3. residual 경로만 재가중한다.\n4. shortcut을 더해 분류로 전달한다.\n\nSE를 Add 전에 두면 새 residual 특징만 조절한다. Add 뒤에 두면 shortcut과 합친 특징 전체를 조절하므로 별도 설계다. projection으로 채널이 섞였다면 SE를 “kernel 3/7/15 중 하나를 선택하는 장치”라고 해석하지 않는다.\n\n**검증:** B2−B1이 핵심. A3−A0와 비교하면 backbone에 따라 SE 효과가 달라지는지 볼 수 있다.\n**목표 지표:** Macro F1 상승과 Accuracy 유지/상승, 행동별 recall 개선.\n**결과 상태:** 미측정.\n**실패 가능성:** 시간 평균이 짧은 중요 반응을 약화시키거나, 사용자의 특징에만 맞는 가중치를 학습할 수 있다.\n**개선 경로:** 효과가 불안정하면 reduction ratio(초기 제안 8), 적용 블록 수를 하나씩 검토한다. 시간 위치 정보가 필요하다는 근거가 생기면 B3 및 channel-only 비교로 확장한다. attention 그림만으로 행동의 인과적 근거를 주장하지 않는다."
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": "## 12. B3 — Inception + ResNet + CBAM\n**데이터와 문제:** 채널뿐 아니라 구간 내 특정 순간의 특징이 중요한 경우를 검증한다. 계단·보행 등에서 유효할 수 있다는 예측은 아직 확인되지 않았다.\n\n**조합 이유:** 다중 규모 특징에 채널 및 시간 가중치를 순서대로 적용한다. [R5]는 순차적인 채널/공간 설계의 근거이며, temporal 변형은 이번의 구현 선택이다.\n\n```text\nx ─────────────────────────────────────────────────────┐\n└→ Inception → projection → Channel → Temporal ─────── Add → ReLU\n```\n\n**과정과 구현 의도:** 평균·최대 요약을 사용하는 채널 attention으로 특징 종류를 조절한 뒤, 채널 방향 요약과 Conv1D로 시간 위치를 재가중한다. 중요한 시간 반응을 분류에 반영하려는 목적이다.\n\n**검증**\n- B3−B1: CBAM 전체의 추가 가치.\n- B3−B2: SE와 CBAM 모듈 전체의 차이.\n- B3−B3-C: 같은 CBAM channel 부분 위에 temporal을 더한 효과. B3-C는 비교용 추가 모델이며 B1~B6의 기본 6개와 별도로 기록한다.\n\n**목표 지표:** Macro F1, 행동별 recall과 혼동 감소. 시간 가중치를 표시하더라도 해석 보조로만 사용한다.\n**결과 상태:** 미측정.\n**실패 가능성:** 잡음 peak를 강조하거나 학습 사용자 특유의 타이밍에 맞춰질 수 있다. 정적 구간에서는 추가 효과가 작을 수 있다.\n**개선 경로:** channel-only가 비슷하거나 더 좋으면 temporal을 제거하는 단순화가 합리적이다. temporal 효과가 반복 확인되면 시간 kernel(초기 제안 7)이나 attention 위치를 별도 ablation으로 비교한다."
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": "## 13. B4 — Depthwise Inception + ResNet\n**데이터와 문제:** 다중 branch와 큰 kernel의 비용을 낮추면서 행동 분류 성능을 유지할 수 있는가?\n\n**조합 이유:** B1의 시간 합성곱만 separable로 바꾸어 다중 규모와 residual 구조는 유지한다. 시간·채널 처리 분리의 원리는 [R4]에 근거한다.\n\n```text\nx ────────────────────────────────────────┐\n└→ Separable Inception → projection ───── Add → ReLU\n```\n\n**과정과 구현 의도:** stem, pooling branch의 1×1 Conv, projection, head를 유지한다. kernel 3/7/15 branch만 교체해 경량화 효과를 분리한다. 첫 비교에서는 폭을 늘리지 않는다.\n\n**검증:** B4−B1. Accuracy·Macro F1 차이와 파라미터 수·측정 지연시간 차이를 함께 보고한다.\n**결과 상태:** 미측정.\n**실패 가능성:** 분리 연산의 표현 제약으로 필요한 시간-채널 상호작용을 충분히 학습하지 못할 수 있다.\n**개선 경로:** 성능 손실이 크면 큰 kernel branch만 separable로 바꾸는 부분 경량화를 검토한다. 이후 동일 파라미터 예산에서 폭을 넓히는 실험은 ‘같은 폭의 연산 교체’와 구분한다. 파라미터 감소가 실제 지연 감소로 이어지지 않으면 병목을 측정한다."
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": "## 14. B5 — Depthwise Inception + ResNet + SE\n**데이터와 문제:** 경량 모델이 만든 특징의 선택성을 개선할 수 있는가?\n\n**조합 이유:** B4의 특징에 SE를 적용하여 입력별 채널 비중을 조절한다. [R2, R4]의 원리 결합이며, SE가 경량화로 사라진 정보를 복구한다는 주장은 하지 않는다.\n\n```text\nx ──────────────────────────────────────────────┐\n└→ Separable Inception → projection → SE ───── Add → ReLU\n```\n\n**과정과 구현 의도:** B4와 같은 특징 추출 경로에 SE만 추가한다. B2와 같은 위치·reduction ratio를 사용해 연산 교체와 attention 효과를 비교 가능하게 한다.\n\n**검증**\n- B5−B4: 경량 모델에서 SE 효과.\n- B5−B2: SE를 유지한 채 경량화했을 때의 성능·비용 변화.\n- (B5−B4)와 (B2−B1): SE 효과가 경량화에 따라 달라지는가?\n\n**목표 지표:** B2에 가까운 Macro F1/Accuracy와 감소한 모델 비용. 허용 성능 감소폭은 적용 목적이 정해진 뒤 사전 지정한다.\n**결과 상태:** 미측정.\n**실패 가능성:** 특징 추출 부족은 재가중만으로 해결되지 않는다.\n**개선 경로:** SE가 이득이면 유지하고, B2와 차이가 크면 부분 경량화나 폭을 검토한다. SE 효과가 없다면 B4처럼 더 단순한 모델을 선택할 수 있다."
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": "## 15. B6 — Depthwise Inception + ResNet + CBAM\n**데이터와 문제:** 경량 구조에서도 채널·시간 선택의 이점이 유지되는가?\n\n**조합 이유:** B4에 CBAM을 적용하여, 일반 합성곱에서 관찰될 수 있는 attention 효과가 경량 모델로도 이어지는지 검증한다. [R4, R5]는 각 구성 원리의 근거다.\n\n```text\nx ───────────────────────────────────────────────────────────────┐\n└→ Separable Inception → projection → Channel → Temporal ───── Add → ReLU\n```\n\n**과정과 구현 의도:** CBAM 설정은 B3와 맞추고, B4와는 attention만 다르게 한다. 추가 연산이 경량화 이점을 얼마나 줄이는지도 측정한다.\n\n**검증:** B6−B4는 CBAM 효과, B6−B5는 attention 종류, B6−B3는 경량화의 영향을 보여준다. 필요하면 B6-C(channel-only)를 추가한다.\n**목표 지표:** Macro F1/Accuracy와 실측 지연시간의 균형.\n**결과 상태:** 미측정.\n**실패 가능성:** attention 연산이 장치 병목이 되거나 시간 가중치가 잡음에 집중할 수 있다.\n**개선 경로:** B5와 성능이 유사한데 느리다면 SE를 선택한다. 일부 행동만 개선되면 행동별 precision/recall의 균형과 사용자별 재현성을 확인한 뒤 temporal 적용 위치·횟수를 줄이는 실험을 한다."
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": "## 16. 실험 순서와 공정한 비교 조건\n**순서:** A0~A5 → B1~B3 → B4~B6 → 필요한 channel-only/위치 ablation. 기본 CNN이 예상보다 약하면 복잡한 모델로 넘어가기 전에 데이터·학습 pipeline을 확인한다.\n\n| 조건 | 초기 제안 / 운영 원칙 |\n|---|---|\n| 데이터·분할 | 00과 동일; 사용자 ID 목록과 정제 정책을 학습 전 고정 |\n| 입력 | (128,3), train stride 64, validation/test 128 |\n| 공통 head | GlobalAveragePooling1D → Dropout → Dense(6) |\n| 학습 | Adam lr=0.001, batch=64, 최대 100 epoch |\n| 종료/선택 | validation Macro F1, patience=12, 최적 가중치 복원 |\n| 반복 | 같은 split에서 seed 0/1/2 |\n| 손실 | 동일한 무가중 cross-entropy부터 시작 |\n| 기본 결과 | Accuracy, Macro F1 평균±표준편차, 행동별/사용자별 지표 |\n| 비용 | 파라미터, best epoch, 학습시간, 같은 장치의 추론시간 |\n| 최종 선택 | validation만 사용; test는 구성 확정 후 평가 |\n\n이는 **시작 설정 제안**이며 이번에 학습하거나 최적화하지 않았다. 블록 개수·최종 폭·dropout 등은 구현 문서에서 고정하고 모든 실험 설정을 저장해야 한다.\n\n같은 폭 비교에서도 파라미터 수가 같지는 않다. 1차는 부품 교체/추가 효과를 보고, 2차에서 필요할 때 같은 파라미터 예산 비교를 한다. 두 질문의 결과를 섞지 않는다.\n\n추론시간은 같은 장치·batch·입력 크기에서 warm-up 후 반복 측정하고, 전처리 포함 여부와 동기화 방법을 기록한다. 모델 로딩 시간을 샘플당 추론시간에 섞지 않는다.\n\nseed 반복은 초기화 변동을 보여줄 뿐 사용자 선택의 불확실성을 해결하지 않는다. 상위 후보는 test 사용자를 제외한 개발 사용자에서 사용자 단위 교차검증으로 확인하고, 동일 fold에서 paired 차이를 비교한다. 통계적 불확실성을 추정할 때 겹친 윈도우를 독립 표본으로 bootstrap하지 않고 사용자 단위를 고려한다."
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": "## 17. 결과를 보고 다음 개선을 정하는 방법\n지표는 문제의 위치를 찾기 위한 근거다. 논문이 좋다고 한 블록을 계속 추가하는 방식으로 개선하지 않는다.\n\n| 관찰 결과 | 먼저 확인할 것 | 후속 실험과 근거 |\n|---|---|---|\n| train/validation 모두 낮음 | 입력·정답·학습률·수용영역 | pipeline 점검 후 kernel/깊이 1개씩 비교 [R1,R3,R6] |\n| train 높고 validation 낮음 | 사용자 차이, 모델 용량, 누수 없는지 | 폭/깊이 축소, dropout·경량화 별도 비교 [R4는 연산 구조 근거] |\n| Accuracy만 높고 Macro F1 악화 | 소수 행동의 precision/recall | train 기반 class weight를 별도 비교; 논문상 개선 보장 없음 |\n| B2가 B1보다 반복해서 좋음 | 어느 행동/사용자에서 개선되는가 | SE 적용 범위 또는 ratio ablation [R2] |\n| B3가 B2보다 좋음 | 채널 pooling 차이도 원인인가 | CBAM channel-only 비교로 temporal 기여 분리 [R5] |\n| B4가 B1과 비슷하고 더 빠름 | seed·사용자 fold에서 유지되는가 | 경량 모델 후보, B5/B6 추가 비용 대비 이득 확인 |\n| B6가 B5보다 복잡하지만 성능 유사 | 실측 지연과 변동성 | 단순한 B5 선택 가능 |\n| 특정 행동 쌍의 혼동 지속 | 실제 confusion matrix, 샘플 품질 | 윈도우 64/128/200 또는 kernel 변경을 각각 비교 |\n\n윈도우 길이를 바꾸면 평가 사례 수와 포함 구간도 달라진다. 같은 test 기록 범위를 바탕으로 비교하고 포함/제외된 구간을 보고한다. 다른 길이의 윈도우 정확도를 조건 설명 없이 직접 순위화하지 않는다.\n\n논문은 “왜 이 변경을 시험할 가치가 있는가”의 근거다. **현재 WISDM 수치를 얼마나 높일지는 새 실험으로만 확인**한다. 원 논문의 이미지 정확도 또는 다른 데이터셋의 최고 수치를 목표 상승폭으로 사용하지 않는다."
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": "## 18. 후속 문서 순서와 공통 작성 틀\n이번 작업은 00·01까지다. 아래 문서는 후속 작업에서 만들며 지금 결과를 채워 넣지 않는다.\n\n| 번호 | 문서 주제 |\n|---|---|\n| 02 | 기본 CNN 및 단독 효과 비교 A0~A5 |\n| 03 | B1: Inception + ResNet |\n| 04 | B2: Inception + ResNet + SE |\n| 05 | B3: Inception + ResNet + CBAM |\n| 06 | B4: Depthwise Inception + ResNet |\n| 07 | B5: B4 + SE |\n| 08 | B6: B4 + CBAM |\n| 09 | 전체 비교와 후속 개선 |\n\n**조합별 문서의 공통 틀**\n1. 데이터: 버전·hash·정제 규칙·남은 샘플/윈도우·split ID.\n2. 연구 질문: 비교군, 개선을 기대하는 지표, 성공 판단 기준.\n3. 조합: 블록 구조·shape·선택 근거·원 논문과 달라진 점.\n4. 과정: 준비 → 특징 추출 → 학습 → 평가를 목적 중심으로 설명.\n5. 코드 연결: 별도 파일/함수 링크와 “이 구현이 어떤 수치 개선을 검증하려는가”.\n6. 결과: Accuracy/Macro F1, 반복 편차, 혼동행렬, 사용자별 성능, 파라미터와 시간.\n7. 해석: 개선·악화의 위치, 대안 설명, 입증된 것과 추정한 것.\n8. 다음 실험: 결과에 근거한 변경 1개, 논문 근거, 검증 비교군과 중단/선택 기준.\n\n**결과 표의 기본 열:** 실험 ID, 설정/데이터 식별자, split, seed, Accuracy, Macro F1, 행동별 recall, 파라미터, 학습시간, 추론시간, 비교군 대비 차이.\n\n**코드 설명 예시:** “residual 경로의 SE는 특징 채널 비중을 조절하기 위해 추가했다. B2−B1의 validation Macro F1과 행동별 recall로 효과를 확인한다. 단순히 코드가 실행되었다는 사실은 목적 달성을 뜻하지 않는다.”\n\n수치가 없으면 ‘미측정’, 실행 실패면 ‘실패 및 원인’, 개선이 없으면 그 결과를 그대로 기록한다. 필요한 분석은 추가하되 시험 결과를 보고 가설을 뒤늦게 사전 가설처럼 바꾸지 않는다."
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": "## 19. 참고 문헌과 인용 범위\n아래는 원 논문 또는 공식 저자 자료다. 확인일 2026-11-02.\n\n| ID | 문헌 | 이 문서에서 사용하는 근거 |\n|---|---|---|\n| R1 | He et al., *Deep Residual Learning for Image Recognition*, CVPR 2016. [원문](https://arxiv.org/abs/1512.03385) | residual 학습과 깊은 모델 최적화 |\n| R2 | Hu et al., *Squeeze-and-Excitation Networks*, CVPR 2018. [원문](https://arxiv.org/abs/1709.01507) | 입력별 채널 재가중 |\n| R3 | Szegedy et al., *Going Deeper with Convolutions*, CVPR 2015. [원문](https://arxiv.org/abs/1409.4842) | 다중 규모 branch와 계산 예산 고려 |\n| R4 | Chollet, *Xception: Deep Learning with Depthwise Separable Convolutions*, CVPR 2017. [원문](https://arxiv.org/abs/1610.02357) | depthwise와 pointwise 분리 |\n| R5 | Woo et al., *CBAM: Convolutional Block Attention Module*, ECCV 2018. [원문](https://arxiv.org/abs/1807.06521) | 순차 channel/spatial attention |\n| R6 | Ismail Fawaz et al., *InceptionTime: Finding AlexNet for Time Series Classification*, Data Mining and Knowledge Discovery, 2020. [원문](https://arxiv.org/abs/1909.04939) | 시계열 분류에서 Inception 계열을 검토할 근거 |\n\nR1~R5의 이미지 연구를 근거로 블록의 설계 동기를 설명했다. 이번 1D 조합들의 WISDM 성능 순위를 이 논문들이 증명하는 것은 아니다. R6도 본 연구의 사용자 정의 단일 모델이나 SE/CBAM 조합을 그대로 검증한 연구가 아니다.\n\n기존 [4week 개념 노트북](../4week/00_CNN_Blocks_Concept_Guide.ipynb)의 개념 구분과 1D 예시를 바탕으로, 이번 문서에서는 WISDM 데이터 조건과 비교 실험 해석을 보강했다."
+    }
+  ]
+}
