@@ -1,0 +1,434 @@
+{
+  "source": "C:\\Users\\ektlaksskgodqhrgo\\Downloads\\WISDM_ar_latest.tar.gz",
+  "archive_sha256": "e573791269aab4a629721cf04b6031b7cbf8e14261cd2bc86e65887a2bc592d7",
+  "raw_sha256": "9aba4b1eaece56ab6d9187b16fc010c176e464750a4ec44c9d833514ecc1fa2e",
+  "parser": "Split on semicolon/CR/LF; remove empty seventh field only; validate user, activity and finite xyz. No timestamp filtering or deduplication.",
+  "candidate_records": 1098209,
+  "valid_numeric_records": 1098208,
+  "repaired_trailing_commas": 11733,
+  "invalid_records": [
+    {
+      "record": 343420,
+      "text": "11,Walking,1867172313000,4.4,4.4,",
+      "reason": "could not convert string to float: ''"
+    }
+  ],
+  "exact_duplicate_occurrences": 66820,
+  "zero_timestamps": 12845,
+  "class_counts": {
+    "Walking": 424399,
+    "Jogging": 342179,
+    "Upstairs": 122869,
+    "Downstairs": 100427,
+    "Sitting": 59939,
+    "Standing": 48395
+  },
+  "official_class_counts": {
+    "Walking": 424400,
+    "Jogging": 342177,
+    "Upstairs": 122869,
+    "Downstairs": 100427,
+    "Sitting": 59939,
+    "Standing": 48395
+  },
+  "subject_class_counts": {
+    "1": {
+      "Walking": 12861,
+      "Jogging": 11056,
+      "Upstairs": 3120,
+      "Downstairs": 2941,
+      "Sitting": 0,
+      "Standing": 0
+    },
+    "2": {
+      "Walking": 11739,
+      "Jogging": 11786,
+      "Upstairs": 0,
+      "Downstairs": 0,
+      "Sitting": 0,
+      "Standing": 0
+    },
+    "3": {
+      "Walking": 12973,
+      "Jogging": 11018,
+      "Upstairs": 3411,
+      "Downstairs": 3326,
+      "Sitting": 1609,
+      "Standing": 2824
+    },
+    "4": {
+      "Walking": 6079,
+      "Jogging": 895,
+      "Upstairs": 1377,
+      "Downstairs": 1763,
+      "Sitting": 1257,
+      "Standing": 0
+    },
+    "5": {
+      "Walking": 12258,
+      "Jogging": 6405,
+      "Upstairs": 3387,
+      "Downstairs": 3281,
+      "Sitting": 1664,
+      "Standing": 1515
+    },
+    "6": {
+      "Walking": 12399,
+      "Jogging": 11818,
+      "Upstairs": 1666,
+      "Downstairs": 1433,
+      "Sitting": 1679,
+      "Standing": 709
+    },
+    "7": {
+      "Walking": 11033,
+      "Jogging": 9183,
+      "Upstairs": 3601,
+      "Downstairs": 2257,
+      "Sitting": 2529,
+      "Standing": 2364
+    },
+    "8": {
+      "Walking": 17108,
+      "Jogging": 10313,
+      "Upstairs": 4453,
+      "Downstairs": 3346,
+      "Sitting": 2699,
+      "Standing": 3269
+    },
+    "9": {
+      "Walking": 12923,
+      "Jogging": 0,
+      "Upstairs": 0,
+      "Downstairs": 0,
+      "Sitting": 0,
+      "Standing": 0
+    },
+    "10": {
+      "Walking": 13048,
+      "Jogging": 12084,
+      "Upstairs": 4296,
+      "Downstairs": 3795,
+      "Sitting": 0,
+      "Standing": 1660
+    },
+    "11": {
+      "Walking": 12138,
+      "Jogging": 12454,
+      "Upstairs": 4392,
+      "Downstairs": 2674,
+      "Sitting": 0,
+      "Standing": 0
+    },
+    "12": {
+      "Walking": 10798,
+      "Jogging": 12360,
+      "Upstairs": 2654,
+      "Downstairs": 2870,
+      "Sitting": 2289,
+      "Standing": 1670
+    },
+    "13": {
+      "Walking": 13047,
+      "Jogging": 12329,
+      "Upstairs": 4638,
+      "Downstairs": 4241,
+      "Sitting": 1179,
+      "Standing": 1659
+    },
+    "14": {
+      "Walking": 13859,
+      "Jogging": 13279,
+      "Upstairs": 8179,
+      "Downstairs": 2875,
+      "Sitting": 0,
+      "Standing": 0
+    },
+    "15": {
+      "Walking": 11529,
+      "Jogging": 12800,
+      "Upstairs": 2064,
+      "Downstairs": 1762,
+      "Sitting": 0,
+      "Standing": 0
+    },
+    "16": {
+      "Walking": 12521,
+      "Jogging": 0,
+      "Upstairs": 1411,
+      "Downstairs": 1575,
+      "Sitting": 2984,
+      "Standing": 1979
+    },
+    "17": {
+      "Walking": 9677,
+      "Jogging": 2887,
+      "Upstairs": 5689,
+      "Downstairs": 3767,
+      "Sitting": 0,
+      "Standing": 0
+    },
+    "18": {
+      "Walking": 12558,
+      "Jogging": 11993,
+      "Upstairs": 2425,
+      "Downstairs": 2415,
+      "Sitting": 1467,
+      "Standing": 1954
+    },
+    "19": {
+      "Walking": 17622,
+      "Jogging": 16201,
+      "Upstairs": 4280,
+      "Downstairs": 2614,
+      "Sitting": 2534,
+      "Standing": 2132
+    },
+    "20": {
+      "Walking": 13134,
+      "Jogging": 12948,
+      "Upstairs": 4844,
+      "Downstairs": 4673,
+      "Sitting": 15644,
+      "Standing": 5389
+    },
+    "21": {
+      "Walking": 12498,
+      "Jogging": 9593,
+      "Upstairs": 4841,
+      "Downstairs": 4036,
+      "Sitting": 1609,
+      "Standing": 2859
+    },
+    "22": {
+      "Walking": 7029,
+      "Jogging": 6224,
+      "Upstairs": 5430,
+      "Downstairs": 3627,
+      "Sitting": 0,
+      "Standing": 0
+    },
+    "23": {
+      "Walking": 6589,
+      "Jogging": 12309,
+      "Upstairs": 4836,
+      "Downstairs": 1939,
+      "Sitting": 0,
+      "Standing": 0
+    },
+    "24": {
+      "Walking": 6256,
+      "Jogging": 12278,
+      "Upstairs": 3039,
+      "Downstairs": 2929,
+      "Sitting": 690,
+      "Standing": 544
+    },
+    "25": {
+      "Walking": 6979,
+      "Jogging": 6489,
+      "Upstairs": 0,
+      "Downstairs": 0,
+      "Sitting": 0,
+      "Standing": 0
+    },
+    "26": {
+      "Walking": 13210,
+      "Jogging": 11913,
+      "Upstairs": 3618,
+      "Downstairs": 3837,
+      "Sitting": 0,
+      "Standing": 0
+    },
+    "27": {
+      "Walking": 12476,
+      "Jogging": 12039,
+      "Upstairs": 3255,
+      "Downstairs": 3460,
+      "Sitting": 2099,
+      "Standing": 1630
+    },
+    "28": {
+      "Walking": 14169,
+      "Jogging": 0,
+      "Upstairs": 2892,
+      "Downstairs": 2997,
+      "Sitting": 0,
+      "Standing": 1300
+    },
+    "29": {
+      "Walking": 12420,
+      "Jogging": 12788,
+      "Upstairs": 4786,
+      "Downstairs": 4329,
+      "Sitting": 2319,
+      "Standing": 1603
+    },
+    "30": {
+      "Walking": 12579,
+      "Jogging": 0,
+      "Upstairs": 4226,
+      "Downstairs": 3872,
+      "Sitting": 1559,
+      "Standing": 3099
+    },
+    "31": {
+      "Walking": 16876,
+      "Jogging": 14075,
+      "Upstairs": 4679,
+      "Downstairs": 3892,
+      "Sitting": 2148,
+      "Standing": 2612
+    },
+    "32": {
+      "Walking": 12376,
+      "Jogging": 12245,
+      "Upstairs": 3814,
+      "Downstairs": 2343,
+      "Sitting": 3059,
+      "Standing": 1669
+    },
+    "33": {
+      "Walking": 14898,
+      "Jogging": 2946,
+      "Upstairs": 2214,
+      "Downstairs": 4535,
+      "Sitting": 3248,
+      "Standing": 1612
+    },
+    "34": {
+      "Walking": 13378,
+      "Jogging": 12869,
+      "Upstairs": 3921,
+      "Downstairs": 2856,
+      "Sitting": 1575,
+      "Standing": 1349
+    },
+    "35": {
+      "Walking": 7162,
+      "Jogging": 12564,
+      "Upstairs": 0,
+      "Downstairs": 0,
+      "Sitting": 1599,
+      "Standing": 1069
+    },
+    "36": {
+      "Walking": 6200,
+      "Jogging": 12038,
+      "Upstairs": 5431,
+      "Downstairs": 4167,
+      "Sitting": 2500,
+      "Standing": 1925
+    }
+  },
+  "missing_classes_by_subject": {
+    "1": [
+      "Sitting",
+      "Standing"
+    ],
+    "2": [
+      "Upstairs",
+      "Downstairs",
+      "Sitting",
+      "Standing"
+    ],
+    "4": [
+      "Standing"
+    ],
+    "9": [
+      "Jogging",
+      "Upstairs",
+      "Downstairs",
+      "Sitting",
+      "Standing"
+    ],
+    "10": [
+      "Sitting"
+    ],
+    "11": [
+      "Sitting",
+      "Standing"
+    ],
+    "14": [
+      "Sitting",
+      "Standing"
+    ],
+    "15": [
+      "Sitting",
+      "Standing"
+    ],
+    "16": [
+      "Jogging"
+    ],
+    "17": [
+      "Sitting",
+      "Standing"
+    ],
+    "22": [
+      "Sitting",
+      "Standing"
+    ],
+    "23": [
+      "Sitting",
+      "Standing"
+    ],
+    "25": [
+      "Upstairs",
+      "Downstairs",
+      "Sitting",
+      "Standing"
+    ],
+    "26": [
+      "Sitting",
+      "Standing"
+    ],
+    "28": [
+      "Jogging",
+      "Sitting"
+    ],
+    "30": [
+      "Jogging"
+    ],
+    "35": [
+      "Upstairs",
+      "Downstairs"
+    ]
+  },
+  "adjacent_same_subject_activity": {
+    "total": 1097803,
+    "zero": 47588,
+    "negative": 7467,
+    "above_250ms": 8022,
+    "positive_ms_percentiles": {
+      "p1": 39.22962999999998,
+      "p25": 49.926,
+      "p50": 49.988,
+      "p75": 50.049,
+      "p99": 120.148
+    }
+  },
+  "acceleration_summary": {
+    "x": {
+      "min": -19.61,
+      "p1": -19.04,
+      "median": 0.27,
+      "p99": 19.0,
+      "max": 19.95
+    },
+    "y": {
+      "min": -19.61,
+      "p1": -12.79,
+      "median": 7.93,
+      "p99": 19.57,
+      "max": 20.04
+    },
+    "z": {
+      "min": -19.8,
+      "p1": -11.99,
+      "median": -0.0,
+      "p99": 13.33,
+      "max": 19.61
+    }
+  },
+  "status": "Data audit only; no training, split assignment, resampling or final cleaning."
+}

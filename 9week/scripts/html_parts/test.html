@@ -1,0 +1,84 @@
+<p class="lede">개발 검증에서 고른 A2를 학습에 참여하지 않은 사용자 6명에게 적용했다. 개발에서는 A2가 가장 높았고, 이 6명의 테스트에서는 기본 CNN인 A0가 가장 높았다.</p>
+
+<section aria-labelledby="frozen">
+  <h2 id="frozen">테스트 전에 고정한 설정</h2>
+  <ol class="flow">
+    <li><strong>후보 선택.</strong> 개발 Macro F1의 반올림 전 평균을 비교했다. 동점이면 파라미터 수가 적은 모델, 그래도 같으면 모델명 순이었다. A2는 0.896375, B1은 0.896198로 약 0.018%p 차이였다. A2를 후보로, A0와 RF를 참조선으로 고정했다.</li>
+    <li><strong>개발 사용자 30명으로 재학습.</strong> stride 64로 만든 12,685개 윈도우를 사용했다. CNN 표준화 값은 개발 사용자만으로 다시 계산했다. 개발 15회의 최적 epoch 중앙값을 반올림해 A2는 15 epoch, A0는 13 epoch로 고정했다. RF는 원본 스케일에서 통계 특징 47개를 계산하고 트리 300개 설정을 사용했다.</li>
+    <li><strong>보류 사용자 6명에 적용.</strong> 사용자 6·21·24·27·29·34의 겹치지 않는 1,411개 윈도우를 stride 128로 만들었다. 같은 윈도우에 A2·A0·RF의 seed 0·1·2를 모두 적용했다. 재학습과 epoch 선택에는 개발 자료만 사용했다.</li>
+  </ol>
+  <p>11월 20일 00:57:56 UTC에 선택·설정·해시를 기록했고, 01:06:20 UTC에 보류 평가를 시작했다. <a href="../final/selection.json">후보 선택 기록</a> · <a href="../final/holdout/evaluation.json">평가 시작과 환경 기록</a></p>
+</section>
+
+<section aria-labelledby="test-scores">
+  <h2 id="test-scores">전체 테스트 성능</h2>
+  <div class="table-wrap">
+    <table>
+      <caption>고정 사용자 6명에서 seed 3개의 평균 ± 표본 표준편차</caption>
+      <thead><tr><th scope="col">모델</th><th scope="col">Macro F1</th><th scope="col">Accuracy</th><th scope="col">Macro Precision</th><th scope="col">Macro Recall</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">A2 · 개발 선정</th><td>0.8110 ± 0.0288</td><td>0.8384 ± 0.0465</td><td>0.8440 ± 0.0186</td><td>0.8035 ± 0.0385</td></tr>
+        <tr><th scope="row">A0 · 기본 CNN</th><td><strong>0.8487 ± 0.0171</strong></td><td>0.9031 ± 0.0208</td><td>0.8657 ± 0.0240</td><td>0.8468 ± 0.0124</td></tr>
+        <tr><th scope="row">RF · 참조선</th><td>0.7560 ± 0.0011</td><td>0.8138 ± 0.0004</td><td>0.7619 ± 0.0007</td><td>0.7592 ± 0.0012</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>A2의 테스트 Macro F1은 A0보다 <strong>3.77%p 낮고</strong> RF보다 <strong>5.50%p 높았다</strong>. 세 모델의 평균은 모두 0.90 참고선 아래였다. A2와 A0의 차이는 seed 0에서 −2.70%p, seed 1에서 +0.20%p, seed 2에서 −8.80%p였다.</p>
+  <details>
+    <summary>seed별 Macro F1과 Accuracy</summary>
+    <div class="table-wrap">
+      <table>
+        <caption>각 칸은 Macro F1 / Accuracy</caption>
+        <thead><tr><th scope="col">모델</th><th scope="col">seed 0</th><th scope="col">seed 1</th><th scope="col">seed 2</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">A2</th><td>0.8177 / 0.8405</td><td>0.8359 / 0.8838</td><td>0.7794 / 0.7909</td></tr>
+          <tr><th scope="row">A0</th><td>0.8447 / 0.9064</td><td>0.8339 / 0.8809</td><td>0.8674 / 0.9220</td></tr>
+          <tr><th scope="row">RF</th><td>0.7570 / 0.8136</td><td>0.7563 / 0.8136</td><td>0.7548 / 0.8143</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+  <p><a href="../final/test_runs.csv">seed별 전체 수치와 학습 시간</a> · <a href="../reports/11_최종_테스트_평가.md">최종 테스트 연구보고서</a></p>
+</section>
+
+<section aria-labelledby="activity-errors">
+  <h2 id="activity-errors">어떤 행동이 어려웠나</h2>
+  <p>Recall은 실제로 그 행동을 한 윈도우 중 모델이 맞힌 비율이다. 계단 오르기는 세 모델 모두 Recall이 가장 낮았고, A2와 A0의 Recall 차이는 걷기와 계단 내려가기에서 컸다.</p>
+  <div class="table-wrap">
+    <table>
+      <caption>행동별 평균 Recall과 테스트 윈도우 수</caption>
+      <thead><tr><th scope="col">행동</th><th scope="col">윈도우</th><th scope="col">A2</th><th scope="col">A0</th><th scope="col">RF</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">걷기</th><td>518</td><td>80.18%</td><td>94.59%</td><td>79.79%</td></tr>
+        <tr><th scope="row">조깅</th><td>483</td><td>98.83%</td><td>99.24%</td><td>99.86%</td></tr>
+        <tr><th scope="row">계단 오르기</th><td>145</td><td>58.85%</td><td>60.23%</td><td>43.91%</td></tr>
+        <tr><th scope="row">계단 내려가기</th><td>130</td><td>65.38%</td><td>75.13%</td><td>53.08%</td></tr>
+        <tr><th scope="row">앉기</th><td>71</td><td>78.87%</td><td>78.87%</td><td>78.87%</td></tr>
+        <tr><th scope="row">서 있기</th><td>64</td><td>100.00%</td><td>100.00%</td><td>100.00%</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="callout">A2의 혼동행렬에서 실제 걷기 518개가 조깅으로 분류된 수는 seed 0·1·2에서 각각 90개, 0개, 131개였다. 같은 사용자와 윈도우에서도 학습 seed에 따라 오류 유형이 달라진 사례다.</p>
+  <p><a href="../final/test_activities.csv">행동별 Precision·Recall·F1 원자료</a> · <a href="../final/test_confusion.csv">모델·seed별 혼동행렬</a></p>
+</section>
+
+<section aria-labelledby="user-errors">
+  <h2 id="user-errors">사용자마다 성능이 얼마나 달랐나</h2>
+  <div class="table-wrap">
+    <table>
+      <caption>사용자별 평균 Accuracy와 테스트 윈도우 수</caption>
+      <thead><tr><th scope="col">사용자</th><th scope="col">윈도우</th><th scope="col">A2</th><th scope="col">A0</th><th scope="col">RF</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">6</th><td>198</td><td>92.42%</td><td>92.09%</td><td>92.93%</td></tr>
+        <tr><th scope="row">21</th><td>262</td><td>87.66%</td><td>91.48%</td><td>63.61%</td></tr>
+        <tr><th scope="row">24</th><td>192</td><td>69.10%</td><td>82.29%</td><td>80.38%</td></tr>
+        <tr><th scope="row">27</th><td>231</td><td>70.71%</td><td>79.22%</td><td>82.25%</td></tr>
+        <tr><th scope="row">29</th><td>259</td><td>99.10%</td><td>97.94%</td><td>79.02%</td></tr>
+        <tr><th scope="row">34</th><td>269</td><td>80.92%</td><td>95.79%</td><td>92.44%</td></tr>
+        <tr><th scope="row">사용자 동일 가중치 평균</th><td>1,411</td><td>83.32%</td><td>89.80%</td><td>81.77%</td></tr>
+        <tr><th scope="row">seed별 최저 사용자 점수의 평균</th><td>해당 없음</td><td>62.39%</td><td>78.57%</td><td>63.61%</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>사용자 동일 가중치 평균은 윈도우 수와 관계없이 각 사람의 정확도를 같은 비중으로 반영한다. A2는 사용자 29에서 99.10%, 사용자 24에서 69.10%였다. 사용자 24의 A2 Accuracy는 seed에 따른 표준편차도 14.77%p였다. <a href="../final/test_users.csv">사용자별 원자료</a></p>
+</section>

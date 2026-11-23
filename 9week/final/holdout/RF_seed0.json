@@ -1,0 +1,9 @@
+{
+  "selection_sha256": "6c9836adbdb694d7eb70d75e9f9fdee7fd1e24b11de7abc6985f0a2838f5382e",
+  "model": "RF",
+  "seed": 0,
+  "checkpoint_sha256": "1d2feb5d949d1d0417a78d54cec0fde9e305d55f55e7410c669980a4786ef103",
+  "artifacts": {
+    "RF_seed0_predictions.npz": "1a47d7fd8f5983a2483953468127216dc3c32241cee2b1482ab27c91dcc0d196"
+  }
+}

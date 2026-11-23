@@ -1,0 +1,63 @@
+<p>WISDM Lab의 WISDM v1.1 원시 데이터는 36명이 여섯 가지 행동을 수행하는 동안 스마트폰으로 측정한 3축 가속도다. 한 레코드에는 사용자 ID, 행동, 시각, x·y·z축 가속도가 들어 있다. 유효한 연속 기록을 약 6.4초인 128시점으로 잘라 한 윈도우당 행동 하나를 예측한다.</p>
+
+<section aria-labelledby="cleaning">
+  <h2 id="cleaning">원시 기록에서 입력 윈도우까지</h2>
+  <ol>
+    <li><strong>형식 검사.</strong> 후보 레코드 1,098,209개 중 11,733개의 불필요한 끝 쉼표를 복구했다. 가속도 한 축이 비어 있는 1개를 제외해 수치 레코드 1,098,208개를 읽었다.</li>
+    <li><strong>중복과 비정상 시각 처리.</strong> timestamp가 0인 레코드와 완전 중복 레코드를 제외했다. 사용자·행동·시각이 연속으로 같으면 뒤 레코드를 건너뛰었다. 사전 점검에서 확인한 완전 중복 66,820건과 0 시각 12,845건은 중복 집계될 수 있다.</li>
+    <li><strong>연속 구간 결정.</strong> 사용자나 행동이 바뀌거나, 파싱에 실패하거나, 시간이 역행하거나, 시간 간격이 1초를 넘으면 구간을 나눴다. 128개를 채울 수 없는 구간은 제외했다.</li>
+    <li><strong>슬라이딩 윈도우 생성.</strong> 정제 후 424개 구간에서 겹치지 않는 윈도우 7,841개를 만들었다. 학습에는 64시점씩 이동해 절반이 겹치게 구성했고, 검증과 테스트에는 128시점씩 이동했다. CNN의 축별 평균·표준편차는 해당 실험의 학습 사용자로부터 정제한 연속 구간의 샘플로 계산한 뒤 학습·검증·테스트 입력에 적용했다.</li>
+  </ol>
+  <p>유효한 양의 관측 간격의 중앙값은 약 50ms로, 명목 주파수 20Hz와 맞는다. 정제는 측정 간격을 완전히 일정하게 만드는 과정 없이 구간을 나누는 방식으로 적용했다.</p>
+  <p>데이터 출처는 WISDM v1.1 배포 자료와 Kwapisz, Weiss, Moore의 「Activity Recognition using Cell Phone Accelerometers」다. <a href="../artifacts/data_audit.json">원시 데이터 점검 결과</a> · <a href="../artifacts/source_descriptions.json">WISDM v1.1 배포 설명과 인용 정보</a></p>
+</section>
+
+<section aria-labelledby="distribution">
+  <h2 id="distribution">행동별 데이터 분포</h2>
+  <p>사용자 17명은 일부 행동 기록이 빠져 있다. 앉기는 23명, 서기는 24명에게서 관측됐다. 걷기와 뛰기는 전체 정제 윈도우의 약 70%이므로 전체 Accuracy만 보면 앉기·서기나 계단에서의 오류가 가려질 수 있다.</p>
+  <div class="table-wrap">
+    <table>
+      <caption>행동별 수치 레코드와 겹치지 않는 윈도우 수</caption>
+      <thead><tr><th scope="col">행동</th><th scope="col">정제 전 수치 레코드</th><th scope="col">전체 정제 윈도우</th><th scope="col">개발 검증</th><th scope="col">보류 테스트</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">걷기 (Walking)</th><td>424,399</td><td>3,146</td><td>2,628</td><td>518</td></tr>
+        <tr><th scope="row">뛰기 (Jogging)</th><td>342,179</td><td>2,333</td><td>1,850</td><td>483</td></tr>
+        <tr><th scope="row">계단 오르기 (Upstairs)</th><td>122,869</td><td>867</td><td>722</td><td>145</td></tr>
+        <tr><th scope="row">계단 내려가기 (Downstairs)</th><td>100,427</td><td>705</td><td>575</td><td>130</td></tr>
+        <tr><th scope="row">앉기 (Sitting)</th><td>59,939</td><td>433</td><td>362</td><td>71</td></tr>
+        <tr><th scope="row">서기 (Standing)</th><td>48,395</td><td>357</td><td>293</td><td>64</td></tr>
+      </tbody>
+      <tfoot><tr><th scope="row">합계</th><td>1,098,208</td><td>7,841</td><td>6,430</td><td>1,411</td></tr></tfoot>
+    </table>
+  </div>
+</section>
+
+<section aria-labelledby="split">
+  <h2 id="split">사용자 단위 분할과 반복</h2>
+  <p>보류 사용자 6·21·24·27·29·34번을 먼저 고정했다. 개발 사용자 30명을 6명씩 다섯 fold로 나누고, 매회 한 fold의 6명을 검증에, 나머지 24명을 학습에 사용했다. 각 fold에는 앉기·서기 기록이 있는 사용자가 포함되도록 했다. 동일한 사용자 분할에서 seed 0·1·2로 각각 학습해 초기화에 따른 변동도 확인했다.</p>
+  <div class="table-wrap">
+    <table>
+      <caption>개발 교차검증의 사용자와 표본 수</caption>
+      <thead><tr><th scope="col">Fold</th><th scope="col">검증 사용자 ID</th><th scope="col">학습 윈도우</th><th scope="col">검증 윈도우</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">0</th><td>1, 7, 20, 22, 25, 36</td><td>10,041</td><td>1,340</td></tr>
+        <tr><th scope="row">1</th><td>9, 16, 19, 26, 28, 33</td><td>10,499</td><td>1,109</td></tr>
+        <tr><th scope="row">2</th><td>2, 3, 4, 14, 30, 31</td><td>10,049</td><td>1,332</td></tr>
+        <tr><th scope="row">3</th><td>8, 10, 11, 12, 13, 15</td><td>9,798</td><td>1,468</td></tr>
+        <tr><th scope="row">4</th><td>5, 17, 18, 23, 32, 35</td><td>10,353</td><td>1,181</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>모델 하나당 개발 검증 예측은 19,290건이다. 검증 윈도우 6,430개에 대해 seed 세 개가 각각 예측한 결과를 합친 수다. 보류 사용자는 전체 데이터 품질과 분포를 파악할 때 포함됐고, 학습·표준화 통계·개발 검증에는 사용하지 않았다.</p>
+</section>
+
+<section aria-labelledby="metrics">
+  <h2 id="metrics">평가 지표를 읽는 법</h2>
+  <dl>
+    <dt>Accuracy</dt><dd>전체 윈도우 가운데 행동을 맞힌 비율이다.</dd>
+    <dt>Precision과 Recall</dt><dd>Precision은 어떤 행동으로 예측한 경우 중 실제 그 행동인 비율이다. Recall은 실제 그 행동인 경우 중 찾아낸 비율이다.</dd>
+    <dt>Macro F1</dt><dd>행동별로 Precision과 Recall의 조화평균을 구하고 여섯 행동의 F1을 같은 비중으로 평균한다. 행동별 비중이 같아도 사용자별 표본 수가 다르므로 사용자별 정확도도 함께 본다.</dd>
+    <dt>Fold 표준편차</dt><dd>개발 검증에서는 fold마다 seed 세 개의 점수를 먼저 평균한다. 이어 fold 다섯 개의 평균과 표본 표준편차를 구해 사용자 묶음 사이의 변동을 보여준다.</dd>
+  </dl>
+  <p><a href="../02_정제_분할_A0_흐름확인.ipynb">정제와 분할 노트북</a> · <a href="../final/selection.json">고정 분할과 평가 설정</a></p>
+</section>

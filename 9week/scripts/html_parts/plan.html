@@ -1,0 +1,46 @@
+<p>스마트폰으로 측정한 3축 가속도에서 걷기, 뛰기, 계단 오르기, 계단 내려가기, 앉기, 서기를 구분한다. 학습에 참여하지 않은 사람에게도 잘 작동하는지 확인하고, CNN 구조를 바꿨을 때 얻는 성능을 파라미터 수와 CPU 추론 시간과 함께 평가했다.</p>
+
+<section aria-labelledby="questions">
+  <h2 id="questions">세 가지 연구 질문</h2>
+  <div class="table-wrap">
+    <table>
+      <caption>각 질문에서 바꾸는 구조와 비교 대상</caption>
+      <thead><tr><th scope="col">질문</th><th scope="col">비교</th><th scope="col">확인할 점</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Q1. Inception과 residual을 결합하면 성능이 좋아지는가?</th><td>A0, A1, A2, B1</td><td>기본 합성곱과 Inception 각각에서 residual의 효과를 확인한다. residual의 유무를 고정한 채 Inception의 효과도 비교한다.</td></tr>
+        <tr><th scope="row">Q2. Attention을 추가하면 성능이 좋아지는가?</th><td>B2·B3와 B1, B3와 B2</td><td>SE와 CBAM을 추가했을 때의 성능과 두 attention 구현의 차이를 확인한다.</td></tr>
+        <tr><th scope="row">Q3. 합성곱을 가볍게 바꿔도 성능이 유지되는가?</th><td>B4와 B1</td><td>분리 합성곱으로 바꿨을 때 Macro F1, 파라미터 수, CPU 추론 시간이 어떻게 달라지는지 확인한다.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>CNN 간에는 데이터 정제, 사용자 분할, 학습 설정, 평가 지표를 공통으로 적용했다. 같은 데이터 분할에서 통계 특징을 쓰는 Random Forest(RF)도 별도 참조선으로 학습했다.</p>
+</section>
+
+<section aria-labelledby="decision">
+  <h2 id="decision">학습 전에 정한 판정 기준</h2>
+  <p>같은 fold 안에서 seed 세 개의 Macro F1을 평균한 뒤, 비교할 두 모델의 차이를 계산한다. 예를 들어 0.890에서 0.895로 오르면 +0.5%p다. 평균 변화와 변화 방향이 일치하는 fold 수를 함께 본다.</p>
+  <div class="table-wrap">
+    <table>
+      <caption>개발 검증 결과에 적용한 사전 기준</caption>
+      <thead><tr><th scope="col">판정</th><th scope="col">조건</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">개선</th><td>평균 +0.5%p 이상이면서 5개 fold 중 4개 이상 상승</td></tr>
+        <tr><th scope="row">악화</th><td>평균 −0.5%p 이하이면서 5개 fold 중 4개 이상 하락</td></tr>
+        <tr><th scope="row">구별 불가</th><td>개선과 악화 중 어느 쪽의 조건도 충족하지 못한 경우</td></tr>
+        <tr><th scope="row">경량화 유지</th><td>B1 대비 평균 Macro F1 손실이 1.0%p 이내이고 파라미터 수 감소</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>위 기준은 이 실험에서 의미 있게 볼 변화 폭을 정하기 위한 실용 규칙이다. 통계적 유의성이나 비열등성을 검정하는 절차는 별도로 수행하지 않았다. Macro F1 0.90은 각 모델의 절대 수준을 살펴보는 참고선으로 사용했다.</p>
+</section>
+
+<section aria-labelledby="scope">
+  <h2 id="scope">실행 범위와 실제 진행</h2>
+  <ol>
+    <li><strong>필수 실험 완료.</strong> A0, A1, A2, B1, B2, B3, B4에서 각각 5 fold × 3 seed를 실행했다. CNN 105회와 별도 RF 15회다.</li>
+    <li><strong>선택 실험 보류.</strong> B4에 SE·CBAM을 붙이는 B5·B6와 A0에 SE·Depthwise·CBAM을 적용하는 A3·A4·A5는 추가 75회의 학습이 필요했다. 확보한 GPU 시간을 필수 실험과 최종 학습에 배정했다.</li>
+    <li><strong>조건부 실험 미실행.</strong> B3가 B2보다 사전 기준상 개선되면 CBAM의 시간 attention을 제거한 B3-C를 비교할 계획이었다. 평균 +0.21%p와 2/5 fold 상승으로 조건을 충족하지 않았다. B6-C에도 같은 원칙을 적용했다.</li>
+    <li><strong>최종 평가 완료.</strong> 개발 평균 Macro F1이 가장 높은 CNN을 선택하고, 동점이면 파라미터 수와 모델명 순으로 결정하기로 했다. A2를 선택하고 A0와 RF를 함께 고정했다. 세 모델을 개발 사용자 30명으로 seed별 재학습한 뒤 보류 사용자에게 총 9회 평가했다.</li>
+  </ol>
+  <p><a href="../연구계획서.md">연구계획서 원문</a> · <a href="development.html">개발 검증 결과</a> · <a href="test.html">보류 테스트 결과</a></p>
+</section>

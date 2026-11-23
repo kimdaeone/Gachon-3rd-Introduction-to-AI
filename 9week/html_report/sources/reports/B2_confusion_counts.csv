@@ -1,0 +1,7 @@
+,Walking,Jogging,Upstairs,Downstairs,Sitting,Standing
+Walking,7196,159,417,112,0,0
+Jogging,92,5328,81,49,0,0
+Upstairs,135,121,1735,169,0,6
+Downstairs,132,75,124,1390,0,4
+Sitting,19,9,25,2,1014,17
+Standing,0,0,0,0,3,876

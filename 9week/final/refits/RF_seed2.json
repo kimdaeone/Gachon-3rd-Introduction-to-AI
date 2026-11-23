@@ -1,0 +1,12 @@
+{
+  "model": "RF",
+  "seed": 2,
+  "selection_sha256": "6c9836adbdb694d7eb70d75e9f9fdee7fd1e24b11de7abc6985f0a2838f5382e",
+  "train_seconds": 24.665,
+  "epochs": null,
+  "params": null,
+  "checkpoint": "RF_seed2.joblib",
+  "artifacts": {
+    "RF_seed2.joblib": "9e5696035415b836f33a7e3b6fda1fd752a10ffb30c920c0c14fe55b084ea733"
+  }
+}

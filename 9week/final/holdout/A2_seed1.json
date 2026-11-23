@@ -1,0 +1,9 @@
+{
+  "selection_sha256": "6c9836adbdb694d7eb70d75e9f9fdee7fd1e24b11de7abc6985f0a2838f5382e",
+  "model": "A2",
+  "seed": 1,
+  "checkpoint_sha256": "bfd7756e8c4b9896b2de5c36bf91690314828f12945c6421649ef9beb2f855db",
+  "artifacts": {
+    "A2_seed1_predictions.npz": "8714992dda3b2d74a2a3bc66cc3f6c90c0cac515002c709327447adc0438caa0"
+  }
+}

@@ -4,6 +4,7 @@ results/
 *.h5
 *.keras
 *.ckpt
+/9week/final/refits/*.joblib
 
 # 내부 작업 문서
 UCI_HAR_프로젝트_정리.md

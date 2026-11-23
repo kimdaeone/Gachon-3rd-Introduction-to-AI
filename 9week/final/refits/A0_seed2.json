@@ -1,0 +1,13 @@
+{
+  "model": "A0",
+  "seed": 2,
+  "selection_sha256": "6c9836adbdb694d7eb70d75e9f9fdee7fd1e24b11de7abc6985f0a2838f5382e",
+  "train_seconds": 21.681,
+  "epochs": 13,
+  "params": 84870,
+  "checkpoint": "A0_seed2.weights.h5",
+  "artifacts": {
+    "A0_seed2.weights.h5": "fda4940aa3d6b4cefb7fdc8f0c13cc4379851c46cd125f76312770c06af17fef",
+    "A0_seed2_history.csv": "1c9af3cfe4a8138a4fb4a66a6770325a2fa3d892d857ebecc0819886c94bbe9e"
+  }
+}

@@ -1,0 +1,216 @@
+{
+  "date": "2026-11-16",
+  "purpose": "Recover detailed predictions; original RF_runs.csv and RF_users.csv preserved",
+  "python": "3.14.2",
+  "scikit_learn": "1.9.1",
+  "numpy": "2.5.3",
+  "archive_sha256": "e573791269aab4a629721cf04b6031b7cbf8e14261cd2bc86e65887a2bc592d7",
+  "model_params": {
+    "bootstrap": true,
+    "ccp_alpha": 0.0,
+    "class_weight": null,
+    "criterion": "gini",
+    "max_depth": null,
+    "max_features": "sqrt",
+    "max_leaf_nodes": null,
+    "max_samples": null,
+    "min_impurity_decrease": 0.0,
+    "min_samples_leaf": 1,
+    "min_samples_split": 2,
+    "min_weight_fraction_leaf": 0.0,
+    "monotonic_cst": null,
+    "n_estimators": 300,
+    "n_jobs": 4,
+    "oob_score": false,
+    "random_state": 2,
+    "verbose": 0,
+    "warm_start": false
+  },
+  "groups": [
+    [
+      1,
+      7,
+      20,
+      22,
+      25,
+      36
+    ],
+    [
+      9,
+      16,
+      19,
+      26,
+      28,
+      33
+    ],
+    [
+      2,
+      3,
+      4,
+      14,
+      30,
+      31
+    ],
+    [
+      8,
+      10,
+      11,
+      12,
+      13,
+      15
+    ],
+    [
+      5,
+      17,
+      18,
+      23,
+      32,
+      35
+    ]
+  ],
+  "test_users": [
+    6,
+    21,
+    24,
+    27,
+    29,
+    34
+  ],
+  "runs": [
+    {
+      "fold": 0,
+      "seed": 0,
+      "train_windows": 10041,
+      "val_windows": 1340,
+      "macro_f1": 0.8368640948048657,
+      "reproduction_sec": 8.02,
+      "original_metrics_match": true
+    },
+    {
+      "fold": 0,
+      "seed": 1,
+      "train_windows": 10041,
+      "val_windows": 1340,
+      "macro_f1": 0.8400338389651263,
+      "reproduction_sec": 8.14,
+      "original_metrics_match": true
+    },
+    {
+      "fold": 0,
+      "seed": 2,
+      "train_windows": 10041,
+      "val_windows": 1340,
+      "macro_f1": 0.8370755714230357,
+      "reproduction_sec": 8.24,
+      "original_metrics_match": true
+    },
+    {
+      "fold": 1,
+      "seed": 0,
+      "train_windows": 10499,
+      "val_windows": 1109,
+      "macro_f1": 0.697619026215071,
+      "reproduction_sec": 8.46,
+      "original_metrics_match": true
+    },
+    {
+      "fold": 1,
+      "seed": 1,
+      "train_windows": 10499,
+      "val_windows": 1109,
+      "macro_f1": 0.7188100203003135,
+      "reproduction_sec": 8.45,
+      "original_metrics_match": true
+    },
+    {
+      "fold": 1,
+      "seed": 2,
+      "train_windows": 10499,
+      "val_windows": 1109,
+      "macro_f1": 0.7113698700215485,
+      "reproduction_sec": 8.17,
+      "original_metrics_match": true
+    },
+    {
+      "fold": 2,
+      "seed": 0,
+      "train_windows": 10049,
+      "val_windows": 1332,
+      "macro_f1": 0.7067130117535824,
+      "reproduction_sec": 7.97,
+      "original_metrics_match": true
+    },
+    {
+      "fold": 2,
+      "seed": 1,
+      "train_windows": 10049,
+      "val_windows": 1332,
+      "macro_f1": 0.7162890025515515,
+      "reproduction_sec": 7.99,
+      "original_metrics_match": true
+    },
+    {
+      "fold": 2,
+      "seed": 2,
+      "train_windows": 10049,
+      "val_windows": 1332,
+      "macro_f1": 0.7001914593270366,
+      "reproduction_sec": 8.26,
+      "original_metrics_match": true
+    },
+    {
+      "fold": 3,
+      "seed": 0,
+      "train_windows": 9798,
+      "val_windows": 1468,
+      "macro_f1": 0.7895917998428773,
+      "reproduction_sec": 8.57,
+      "original_metrics_match": true
+    },
+    {
+      "fold": 3,
+      "seed": 1,
+      "train_windows": 9798,
+      "val_windows": 1468,
+      "macro_f1": 0.7830579784580274,
+      "reproduction_sec": 8.48,
+      "original_metrics_match": true
+    },
+    {
+      "fold": 3,
+      "seed": 2,
+      "train_windows": 9798,
+      "val_windows": 1468,
+      "macro_f1": 0.7856475591782847,
+      "reproduction_sec": 8.56,
+      "original_metrics_match": true
+    },
+    {
+      "fold": 4,
+      "seed": 0,
+      "train_windows": 10353,
+      "val_windows": 1181,
+      "macro_f1": 0.80650280355057,
+      "reproduction_sec": 8.83,
+      "original_metrics_match": true
+    },
+    {
+      "fold": 4,
+      "seed": 1,
+      "train_windows": 10353,
+      "val_windows": 1181,
+      "macro_f1": 0.8014792763212174,
+      "reproduction_sec": 8.86,
+      "original_metrics_match": true
+    },
+    {
+      "fold": 4,
+      "seed": 2,
+      "train_windows": 10353,
+      "val_windows": 1181,
+      "macro_f1": 0.7938640152264321,
+      "reproduction_sec": 8.93,
+      "original_metrics_match": true
+    }
+  ]
+}

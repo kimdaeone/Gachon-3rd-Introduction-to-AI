@@ -1,0 +1,58 @@
+<p class="lede">일곱 CNN은 모두 128×3 가속도 입력에서 여섯 행동의 확률을 예측한다. 비교하는 구조들은 시간 방향의 패턴을 찾는 합성곱, 기존 특징을 전달하는 residual, 특정 특징과 시점에 가중치를 주는 attention을 조합한다.</p>
+
+<section aria-labelledby="building-blocks">
+  <h2 id="building-blocks">CNN 부품이 하는 일</h2>
+  <dl class="definition-grid">
+    <dt>기본 1차원 CNN</dt><dd>Conv1D 필터가 시간축을 움직이며 가까운 시점들의 변화를 묶어 특징을 만든다. A0의 합성곱 블록은 길이 5 필터 두 층과 Batch Normalization·ReLU를 사용하며, Max Pooling으로 시간축 길이를 절반으로 줄인다.</dd>
+    <dt>Residual (ResNet)</dt><dd>블록이 계산한 특징 F(x)에 입력 x를 더해 ReLU를 적용한다. 이전 특징과 기울기가 지나가는 경로가 추가된다. 이 구현은 입력과 출력의 모양이 같아서 덧셈에 별도 가중치가 필요 없다.</dd>
+    <dt>Inception</dt><dd>1×1 합성곱으로 64채널을 16채널로 줄인 뒤, 길이 3·7·15인 세 필터 분기에서 서로 다른 시간 폭의 패턴을 추출한다. 별도 pooling 분기까지 네 출력을 이어 붙여 64채널을 만든다.</dd>
+    <dt>SE</dt><dd>채널별 시간 평균을 구하고 Dense 층(64→8→64)과 sigmoid로 가중치를 만든다. 같은 채널의 모든 시점에는 같은 값을 곱해 구간별로 중요한 특징의 비중을 조절한다.</dd>
+    <dt>CBAM</dt><dd>채널별 시간 평균과 최댓값으로 채널 가중치를 계산한다. 이어 각 시점의 채널 평균과 최댓값을 길이 7인 필터에 넣어 시간 가중치를 계산한다. SE와 채널 가중치 계산도 달라 두 모델의 점수 차이에 두 변화가 함께 반영된다.</dd>
+    <dt>Depthwise 분리 합성곱</dt><dd>각 채널 안에서 시간 패턴을 찾은 뒤 1×1 합성곱으로 채널을 섞는다. 길이 15, 입력·출력 16채널인 분기는 편향을 제외하면 일반 합성곱 가중치 3,840개를 분리 합성곱 가중치 496개로 줄인다.</dd>
+  </dl>
+</section>
+
+<section aria-labelledby="variants">
+  <h2 id="variants">일곱 구조와 Random Forest 참조선</h2>
+  <div class="table-wrap">
+    <table>
+      <caption>모델별 변경 사항과 파라미터 수</caption>
+      <thead><tr><th scope="col">모델</th><th scope="col">구성</th><th scope="col">비교에서 바뀌는 부분</th><th scope="col">파라미터</th></tr></thead>
+      <tbody>
+        <tr><th scope="row"><a href="../reports/03_A0_연구보고서.md">A0</a></th><td>기본 CNN</td><td>64채널 시작 층과 기본 합성곱 블록 두 개</td><td>84,870</td></tr>
+        <tr><th scope="row"><a href="../reports/04_A1_연구보고서.md">A1</a></th><td>기본 CNN + residual</td><td>A0의 기본 블록에 입력을 더하는 연결 추가</td><td>84,870</td></tr>
+        <tr><th scope="row"><a href="../reports/05_A2_연구보고서.md">A2</a></th><td>Inception</td><td>A0의 기본 블록을 여러 시간 폭의 분기로 교체</td><td>36,806</td></tr>
+        <tr><th scope="row"><a href="../reports/06_B1_연구보고서.md">B1</a></th><td>Inception + residual</td><td>A2에 입력을 더하는 연결 추가</td><td>36,806</td></tr>
+        <tr><th scope="row"><a href="../reports/07_B2_연구보고서.md">B2</a></th><td>B1 + SE</td><td>입력을 더하기 전에 SE로 채널 가중치 적용</td><td>38,998</td></tr>
+        <tr><th scope="row"><a href="../reports/08_B3_연구보고서.md">B3</a></th><td>B1 + CBAM</td><td>입력을 더하기 전에 채널·시간 순으로 가중치 적용</td><td>39,028</td></tr>
+        <tr><th scope="row"><a href="../reports/09_B4_연구보고서.md">B4</a></th><td>Depthwise Inception + residual</td><td>B1의 세 시간 합성곱 분기를 분리 합성곱으로 교체</td><td>15,878</td></tr>
+        <tr><th scope="row"><a href="../reports/03R_RF_연구보고서.md">RF</a></th><td>통계 특징 + Random Forest</td><td>윈도우의 특징 47개를 트리 300개로 분류하는 별도 참조선</td><td>—</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>CNN은 마지막에 Global Average Pooling으로 시간 방향의 특징을 요약하고, Dropout과 Softmax 분류층을 거친다. RF는 x·y·z축과 합성 가속도 크기에서 각각 평균, 표준편차, 백분위수, 인접 시점 차이 등 통계량 11개를 구했다. 여기에 축 쌍의 상관계수 3개를 더해 47개 특징을 만들었다. RF는 같은 정제 데이터와 사용자 분할에서 원래 가속도 값으로 특징을 추출하고 고정된 트리 설정으로 학습했다.</p>
+  <p><a href="../01_CNN_5종_원리와_조합_설계.ipynb">CNN 부품과 조합 설계 노트북</a></p>
+</section>
+
+<section aria-labelledby="training">
+  <h2 id="training">공통 학습 설정과 가중치 선택</h2>
+  <p>개발 CNN 학습은 Colab T4에서 TensorFlow 2.21.0으로 실행했다. 한 epoch가 끝날 때마다 검증 fold의 Macro F1을 계산했다. 점수가 12 epoch 동안 좋아지지 않으면 멈춘 뒤 최고 점수 시점의 가중치를 복원했다. 개발 점수는 이 가중치 선택에 쓴 검증 사용자에서 계산했다.</p>
+  <div class="table-wrap">
+    <table>
+      <caption>개발 단계에서 고정한 CNN 학습 설정</caption>
+      <thead><tr><th scope="col">항목</th><th scope="col">설정</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">옵티마이저</th><td>Adam, 학습률 0.001</td></tr>
+        <tr><th scope="row">손실 함수</th><td>Sparse categorical cross-entropy</td></tr>
+        <tr><th scope="row">배치 크기와 Dropout</th><td>64, 0.4</td></tr>
+        <tr><th scope="row">Epoch 상한과 조기 종료</th><td>최대 100 epoch, 검증 Macro F1 기준 patience 12</td></tr>
+        <tr><th scope="row">실행 반복</th><td>모델 하나당 5 fold × seed 0·1·2, 총 15회</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <figure>
+    <img src="../reports/figures/A2_f1_curves.png" alt="A2의 다섯 검증 fold에서 seed별 epoch에 따른 Macro F1 곡선과 선택 지점" loading="lazy">
+    <figcaption>A2의 개발 검증 Macro F1 학습 곡선. 점선은 가중치를 저장한 epoch다. 15회에서 선택된 epoch는 3~31이었고 중앙값은 15였다.</figcaption>
+  </figure>
+  <p>최종 재학습에서는 각 CNN의 개발 최적 epoch 15개의 중앙값을 반올림해 학습 횟수를 고정했다. A2는 15 epoch, A0는 13 epoch로 개발 30명 전체에서 seed별 재학습했다. RF는 기존 설정을 유지했고, 보류 데이터는 학습이 끝난 뒤 평가에 사용했다. <a href="test.html">최종 재학습과 테스트 결과</a></p>
+</section>

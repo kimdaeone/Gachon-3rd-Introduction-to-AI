@@ -347,9 +347,11 @@ index='''# WISDM 모델별 연구보고서
 
 ## 보고서 작성 시점
 
-각 모델의 15회 학습이 끝나면 예측값으로 저장 지표를 재검증하고 보고서를 작성한다. 노트북·보고서·그림·원자료를 Drive에 동기화한 뒤 모델별로 커밋·푸시한다. 모델 변경이 없는 분석 보강은 학습 결과와 구분해 기록한다.
+각 모델의 15회 학습이 끝나면 예측값으로 저장 지표를 재검증하고 보고서를 작성한다. 노트북·보고서·그림·원자료를 Drive에 동기화한 뒤 사용자 검토 후 GitHub에 푸시한다. 모델 변경이 없는 분석 보강은 학습 결과와 구분해 기록한다.
 '''
-(out/'README.md').write_text(index,encoding='utf-8')
+index_path=out/'README.md'
+if not index_path.exists():
+ index_path.write_text(index,encoding='utf-8')
 summary={model:{'mean':d['mean'].to_dict(),'std':d['std'].to_dict(),'class_mean':d['classes'].groupby('activity')[['precision','recall','f1']].mean().to_dict(),'pooled_accuracy':d['pooled_accuracy'],'pooled_f1':d['pooled_f1']} for model,d in models.items()}
 (out/'report_metrics.json').write_text(json.dumps(summary,ensure_ascii=False,indent=2),encoding='utf-8')
 print('REPORTS GENERATED')

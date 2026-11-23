@@ -1,0 +1,101 @@
+{
+  "selection_sha256": "6c9836adbdb694d7eb70d75e9f9fdee7fd1e24b11de7abc6985f0a2838f5382e",
+  "implementation_sha256": "cbb8207ab846c9dea4d021099d30439de68680b7f4b3d6cfb6697d1497f4827d",
+  "raw_calls_sha256": "38185ce00170078b3a40137833be7f9ae3b2c834fd35c479dd0ae1b816e5d1b5",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "processor": "AMD Ryzen 7 7730U with Radeon Graphics",
+  "logical_cpus": 16,
+  "onednn_env": "0",
+  "python": "3.14.2",
+  "tensorflow": "2.22.0-rc0",
+  "keras": "3.16.0.dev2026101104",
+  "numpy": "2.5.3",
+  "intra_op_threads": 1,
+  "inter_op_threads": 1,
+  "omp_threads": 1,
+  "device": "CPU:0",
+  "input_shape": [
+    1,
+    128,
+    3
+  ],
+  "input_dtype": "float32",
+  "input": "Seed 0 fixed standard-normal synthetic tensor shared by all models",
+  "warmup_calls": 50,
+  "trials": 5,
+  "calls_per_trial": 200,
+  "timing": "Model tf.function and output tensor to NumPy; excludes loading and preprocessing",
+  "summary": "Median and linear-interpolated quartiles across 1,000 timed calls per model",
+  "models": [
+    {
+      "model": "A0",
+      "params": 84870,
+      "median_ms": 0.4993,
+      "q1_ms": 0.474,
+      "q3_ms": 0.5353,
+      "iqr_ms": 0.06130000000000002,
+      "checkpoint": "A0_fold0_seed0.weights.h5",
+      "checkpoint_sha256": "2df578afc1fbbf90ab4c03a068cb79380e3c9cd458664dd107490840f1b8a849"
+    },
+    {
+      "model": "A1",
+      "params": 84870,
+      "median_ms": 0.5217,
+      "q1_ms": 0.486375,
+      "q3_ms": 0.566875,
+      "iqr_ms": 0.08050000000000002,
+      "checkpoint": "A1_fold0_seed0.weights.h5",
+      "checkpoint_sha256": "7a041ee953d260e3f8d7ad835ed7e5fc8fab12a01132bc57489c2b900ca81c21"
+    },
+    {
+      "model": "A2",
+      "params": 36806,
+      "median_ms": 0.6344,
+      "q1_ms": 0.5927,
+      "q3_ms": 0.67115,
+      "iqr_ms": 0.07845000000000002,
+      "checkpoint": "A2_fold0_seed0.weights.h5",
+      "checkpoint_sha256": "9521727a99ff54d0b8e98992c47ad0c70d3be80158b3bfe3711bf6f49ad4bf14"
+    },
+    {
+      "model": "B1",
+      "params": 36806,
+      "median_ms": 0.6427,
+      "q1_ms": 0.60155,
+      "q3_ms": 0.6862,
+      "iqr_ms": 0.08465,
+      "checkpoint": "B1_fold0_seed0.weights.h5",
+      "checkpoint_sha256": "c7bd69d57182ec994c29eabbd1cc599cf84a869ea22bef93ba6efa35bf93e10a"
+    },
+    {
+      "model": "B2",
+      "params": 38998,
+      "median_ms": 0.6579,
+      "q1_ms": 0.6249,
+      "q3_ms": 0.71295,
+      "iqr_ms": 0.08804999999999996,
+      "checkpoint": "B2_fold0_seed0.weights.h5",
+      "checkpoint_sha256": "f8278a0b24e7e3ea7be167e26afa7c7f9cc8fb038939e30a6967c07b56d32942"
+    },
+    {
+      "model": "B3",
+      "params": 39028,
+      "median_ms": 0.7225,
+      "q1_ms": 0.67955,
+      "q3_ms": 0.76405,
+      "iqr_ms": 0.08450000000000002,
+      "checkpoint": "B3_fold0_seed0.weights.h5",
+      "checkpoint_sha256": "087a7acc751c90131c9187c1be2be12ef9d173981e6194950a97e30a6b0bfdec"
+    },
+    {
+      "model": "B4",
+      "params": 15878,
+      "median_ms": 0.6348,
+      "q1_ms": 0.5927,
+      "q3_ms": 0.67425,
+      "iqr_ms": 0.08155000000000001,
+      "checkpoint": "B4_fold0_seed0.weights.h5",
+      "checkpoint_sha256": "bab5987b37f49e7d655356d03320e29323a518c6ed2a28517d9414fe151db983"
+    }
+  ]
+}

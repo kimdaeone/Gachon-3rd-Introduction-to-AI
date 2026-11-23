@@ -1,0 +1,377 @@
+{
+  "schema": 1,
+  "frozen_at": "2026-11-20T00:57:56+00:00",
+  "selection": "A2",
+  "rule": "Highest full-precision development macro F1; fewer parameters; model name",
+  "epoch_rule": "Median of 15 development best epochs, round half up",
+  "final_models": [
+    "A2",
+    "A0",
+    "RF"
+  ],
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "protocol": {
+    "revision": "2026-11-16-v1",
+    "data_sha256": "e573791269aab4a629721cf04b6031b7cbf8e14261cd2bc86e65887a2bc592d7",
+    "groups": [
+      [
+        1,
+        7,
+        20,
+        22,
+        25,
+        36
+      ],
+      [
+        9,
+        16,
+        19,
+        26,
+        28,
+        33
+      ],
+      [
+        2,
+        3,
+        4,
+        14,
+        30,
+        31
+      ],
+      [
+        8,
+        10,
+        11,
+        12,
+        13,
+        15
+      ],
+      [
+        5,
+        17,
+        18,
+        23,
+        32,
+        35
+      ]
+    ],
+    "test_users": [
+      6,
+      21,
+      24,
+      27,
+      29,
+      34
+    ],
+    "window": 128,
+    "strides": [
+      64,
+      128
+    ],
+    "max_gap_ns": 1000000000,
+    "optimizer": "Adam",
+    "lr": 0.001,
+    "batch_size": 64,
+    "max_epochs": 100,
+    "monitor": "val_macro_f1",
+    "patience": 12
+  },
+  "b3_c_gate": {
+    "mean_delta": 0.0020908492122656995,
+    "improved_folds": 2,
+    "triggered": false
+  },
+  "cnn_development": [
+    {
+      "model": "A2",
+      "fold_macro_f1": [
+        0.923009740391199,
+        0.8877058398483312,
+        0.8400183239073704,
+        0.9366708941631978,
+        0.8944714955183819
+      ],
+      "macro_f1": 0.896375258765696,
+      "fold_std": 0.037376533711139526,
+      "params": 36806,
+      "best_epochs": [
+        16,
+        31,
+        11,
+        4,
+        18,
+        15,
+        23,
+        25,
+        9,
+        8,
+        6,
+        3,
+        15,
+        15,
+        21
+      ],
+      "refit_epochs": 15
+    },
+    {
+      "model": "B1",
+      "fold_macro_f1": [
+        0.9253445315990375,
+        0.8847646805863036,
+        0.8209159876091565,
+        0.9472004124533009,
+        0.902766734683703
+      ],
+      "macro_f1": 0.8961984693863003,
+      "fold_std": 0.04819755397575767,
+      "params": 36806,
+      "best_epochs": [
+        22,
+        31,
+        12,
+        5,
+        21,
+        22,
+        20,
+        6,
+        23,
+        13,
+        12,
+        30,
+        23,
+        26,
+        5
+      ],
+      "refit_epochs": 21
+    },
+    {
+      "model": "B3",
+      "fold_macro_f1": [
+        0.9124213204873644,
+        0.8974022904651938,
+        0.8333016389303712,
+        0.9420014375733009,
+        0.887552911335417
+      ],
+      "macro_f1": 0.8945359197583295,
+      "fold_std": 0.039935819062786294,
+      "params": 39028,
+      "best_epochs": [
+        33,
+        10,
+        9,
+        18,
+        26,
+        29,
+        4,
+        9,
+        13,
+        20,
+        10,
+        34,
+        15,
+        15,
+        10
+      ],
+      "refit_epochs": 15
+    },
+    {
+      "model": "A0",
+      "fold_macro_f1": [
+        0.9197478428172011,
+        0.8857451798028022,
+        0.8117499878083387,
+        0.9388383494934016,
+        0.9084840027116694
+      ],
+      "macro_f1": 0.8929130725266826,
+      "fold_std": 0.049270972273080325,
+      "params": 84870,
+      "best_epochs": [
+        34,
+        10,
+        32,
+        33,
+        8,
+        5,
+        6,
+        25,
+        9,
+        13,
+        11,
+        32,
+        12,
+        37,
+        41
+      ],
+      "refit_epochs": 13
+    },
+    {
+      "model": "B4",
+      "fold_macro_f1": [
+        0.913814266244827,
+        0.8936437698491583,
+        0.8180572980471221,
+        0.9407509505642349,
+        0.8959636813429833
+      ],
+      "macro_f1": 0.8924459932096651,
+      "fold_std": 0.04565484301856479,
+      "params": 15878,
+      "best_epochs": [
+        15,
+        18,
+        16,
+        52,
+        10,
+        17,
+        28,
+        19,
+        19,
+        36,
+        15,
+        19,
+        14,
+        25,
+        37
+      ],
+      "refit_epochs": 19
+    },
+    {
+      "model": "B2",
+      "fold_macro_f1": [
+        0.915831342020871,
+        0.887259077305966,
+        0.8258799291813279,
+        0.9456239739748835,
+        0.8876310302472704
+      ],
+      "macro_f1": 0.8924450705460638,
+      "fold_std": 0.044316760424745444,
+      "params": 38998,
+      "best_epochs": [
+        11,
+        20,
+        32,
+        11,
+        22,
+        7,
+        8,
+        3,
+        26,
+        6,
+        21,
+        37,
+        19,
+        13,
+        14
+      ],
+      "refit_epochs": 14
+    },
+    {
+      "model": "A1",
+      "fold_macro_f1": [
+        0.9174303286664516,
+        0.8703430782275631,
+        0.8178609230359017,
+        0.9359548892919483,
+        0.8986648586073263
+      ],
+      "macro_f1": 0.8880508155658382,
+      "fold_std": 0.04612699576787338,
+      "params": 84870,
+      "best_epochs": [
+        23,
+        25,
+        20,
+        32,
+        17,
+        22,
+        25,
+        15,
+        10,
+        6,
+        14,
+        7,
+        15,
+        24,
+        25
+      ],
+      "refit_epochs": 20
+    }
+  ],
+  "rf_development": {
+    "model": "RF",
+    "fold_macro_f1": [
+      0.8379911683976758,
+      0.709266305512311,
+      0.7077311578773902,
+      0.7860991124930631,
+      0.8006153650327399
+    ],
+    "macro_f1": 0.768340621862636,
+    "fold_std": 0.057817609008056485
+  },
+  "rf_params": {
+    "bootstrap": true,
+    "ccp_alpha": 0.0,
+    "class_weight": null,
+    "criterion": "gini",
+    "max_depth": null,
+    "max_features": "sqrt",
+    "max_leaf_nodes": null,
+    "max_samples": null,
+    "min_impurity_decrease": 0.0,
+    "min_samples_leaf": 1,
+    "min_samples_split": 2,
+    "min_weight_fraction_leaf": 0.0,
+    "monotonic_cst": null,
+    "n_estimators": 300,
+    "n_jobs": 4,
+    "oob_score": false,
+    "verbose": 0,
+    "warm_start": false
+  },
+  "source_sha256": {
+    "A0_model": "7d85f061fc3d213a1fd62ef1584911354f14478910d361ce258458ae1dafc7ed",
+    "A1_model": "a0e31a968b07c1e8122a4290cec44691e1e396375585f2a9856258508e390011",
+    "A2_model": "3f1bc04a0f27a763ef31b532216186ec252569c7adcfa948db9bb6ca35cb9c51",
+    "B1_model": "f4437e17b2758a53cd45f36ac5a82b71c21278e7c3324061a992faf395a9835d",
+    "B2_model": "a4cf2392a4d1c3e852f7442463a1aa2db6a4f496ee04e5c6ebe121ffef7937fe",
+    "B3_model": "ad83630145cb7bd72fe896dd26cf9b622103323acd8bc44bf569e8b1f157e2d3",
+    "B4_model": "c7d93a74a8c7a429684540f301e40a87801592178f194a5cc026dbc0e63c5d9f",
+    "RF_model": "8d3b0ac387f5552b72369f4ed5ba75228366a3a00a453e55325933bb1f21b27b",
+    "A0_data_4": "76f66b00611e8f2745477d83052f8e2014a293da7835a50c2129ac2d4f64bcda",
+    "A0_data_5": "c33610c960c4ecdc03fb0349bc220a58882e6388de3bfc8baee63ea51f6a9b52"
+  },
+  "development_sha256": {
+    "A0_runs.csv": "83d0e8dfb8e103f9be480183c3f6b964ca44945dd268ba2b709610114bd1d987",
+    "A0_progress.json": "ec5a5600a5dd7654070ee127d5fa15eb3c3c96adc9385213deac0efac3e2c656",
+    "A0_fold0_seed0.weights.h5": "2df578afc1fbbf90ab4c03a068cb79380e3c9cd458664dd107490840f1b8a849",
+    "A1_runs.csv": "32d7db9b1736b6d988ab49f35d80d44849b45264b5ed3fbfecd8da3fc5092ab6",
+    "A1_progress.json": "9e23e9454b35338895fbd7eb2145c5878db54880fc21b6a0a472f311c57c36bf",
+    "A1_fold0_seed0.weights.h5": "7a041ee953d260e3f8d7ad835ed7e5fc8fab12a01132bc57489c2b900ca81c21",
+    "A2_runs.csv": "273d2dc15a68d723ff56dd43326429947f04453ba28fc5954bc3422c953c9705",
+    "A2_progress.json": "257fd6929895498f0ac96224a35fcacbe8e047eb0d2ca78325fd0a060e8ed3e4",
+    "A2_fold0_seed0.weights.h5": "9521727a99ff54d0b8e98992c47ad0c70d3be80158b3bfe3711bf6f49ad4bf14",
+    "B1_runs.csv": "366733a4e8fda82b445a718b2b765dcdaf945b7ce912001f826e9b1976cca10d",
+    "B1_progress.json": "f6d51e7f33e9955377fcc93c0527356b062c6a11ff2c08a1e108de8e1eb9b5bb",
+    "B1_fold0_seed0.weights.h5": "c7bd69d57182ec994c29eabbd1cc599cf84a869ea22bef93ba6efa35bf93e10a",
+    "B2_runs.csv": "bfb7e2eb6f60128f6556220cd5dbb2d07f4b362d4d66324ed133049b0b60eeef",
+    "B2_progress.json": "e32ceeaed3dfaba285e99ecdd8b0390d61e3aa78f622b2f258322f0a665da7c9",
+    "B2_fold0_seed0.weights.h5": "f8278a0b24e7e3ea7be167e26afa7c7f9cc8fb038939e30a6967c07b56d32942",
+    "B3_runs.csv": "03af72e13ee1e2cbc11db9e4461b715c3d4464953d3ec4b6cb32e7c03f0321bf",
+    "B3_progress.json": "2d09402d9f9bbaaf3fbdef722c17ae4f898f6dde4c1a2fd86bd989393c696e33",
+    "B3_fold0_seed0.weights.h5": "087a7acc751c90131c9187c1be2be12ef9d173981e6194950a97e30a6b0bfdec",
+    "B4_runs.csv": "9720fc59b200ea8f20c9c78882b72fd53113a87de8b4dc10da8a259f65d04ab9",
+    "B4_progress.json": "50b4d3be14d91084ed3e7f8f4f86421e8cceab81fc2559994dbae9a8015c179d",
+    "B4_fold0_seed0.weights.h5": "bab5987b37f49e7d655356d03320e29323a518c6ed2a28517d9414fe151db983",
+    "RF_runs.csv": "8e52e53fefd4c6f1ea938777e7afe5f00599fda69b86ded4a95760d251f2a77f",
+    "RF_reproduction.json": "f0ee8077df57324df41700bf54819e6b880957a84f3d27784f1606192abdf87d"
+  },
+  "implementation_sha256": "2691f811c31f173956a095d5c2ac49406a87ea7984820a02dc3d34c282161772"
+}

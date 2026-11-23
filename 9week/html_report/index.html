@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="가천대학교 기계학습프로그래밍 수업의 WISDM 1D CNN 사람 활동 인식 연구 보고서">
+  <title>스마트폰 가속도계 기반 사람 활동 인식 | WISDM 연구 보고서</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <a class="skip-link" href="#report-content">본문 바로가기</a>
+  <header class="masthead" id="top">
+    <div class="masthead-inner frame">
+      <a class="wordmark" href="index.html">WISDM 연구 보고서</a>
+      <p class="course">가천대학교 · 기계학습프로그래밍</p>
+    </div>
+    <nav class="site-nav" aria-label="보고서 장">
+      <ul class="frame"><li><a href="index.html" aria-current="page">연구 개요</a></li>
+<li><a href="plan.html">연구 계획</a></li>
+<li><a href="data.html">데이터</a></li>
+<li><a href="models.html">모델 설계</a></li>
+<li><a href="development.html">개발 검증</a></li>
+<li><a href="test.html">최종 테스트</a></li>
+<li><a href="review.html">결론과 한계</a></li></ul>
+    </nav>
+  </header>
+  <main id="report-content" tabindex="-1">
+    <div class="page-hero page-hero-home">
+      <div class="frame">
+        <p class="page-location">연구 개요 <span aria-hidden="true">/</span> <span>1 / 7장</span></p>
+        <h1>스마트폰 가속도계 기반 사람 활동 인식</h1>
+      </div>
+    </div>
+    <div class="reading-layout frame">
+      <nav class="section-index" aria-label="이 장의 목차">
+      <p class="section-index-title">이 장의 목차</p>
+      <ul><li><a href="#findings">새 사용자를 만났을 때 달라진 순위</a></li>
+<li><a href="#questions">세 연구 질문에 대한 답</a></li>
+<li><a href="#reading">보고서를 읽는 순서</a></li></ul>
+    </nav>
+      <div class="report-body">
+<p class="lede">휴대폰을 소지한 사람이 걷고 있는지, 계단을 오르고 있는지 가속도만으로 구분할 수 있을까? 학습에 참여한 적 없는 사람에게도 통하는 신경망 구조를 찾기 위해 WISDM의 여섯 행동을 비교했다.</p>
+
+<h2 id="findings">새 사용자를 만났을 때 달라진 순위</h2>
+<p>개발 사용자 30명으로 비교했을 때는 여러 길이의 시간 필터를 함께 쓰는 <strong>A2(Inception)</strong>가 평균 Macro F1 0.8964로 가장 높았다. 후보와 학습 설정을 고정한 후 보류해 둔 6명에게 적용하자 기본 CNN인 <strong>A0가 0.8487</strong>, A2가 0.8110을 기록했다. 개발 검증에서 두 모델의 차이는 0.35%p였고, 검증 사용자를 바꾸면 우열도 바뀌었다.</p>
+<figure><img src="sources/reports/figures/html_development_holdout.png" alt="세 모델 모두 개발 검증보다 보류 테스트 점수가 낮았다. A2와 A0의 순위가 바뀌었고, RF는 두 평가 모두 세 번째였다."><figcaption>같은 모델의 두 점을 선으로 연결했다. 원은 개발 검증, 마름모는 보류 테스트이며 정확한 값은 아래 표에 있다.</figcaption></figure>
+<div class="table-wrap" tabindex="0" role="region" aria-label="최종 평가에 포함한 세 모델의 성능"><table><caption>최종 평가에 포함한 세 모델의 성능</caption><thead><tr><th scope="col">구조</th><th scope="col">개발 Macro F1</th><th scope="col">보류 테스트 Macro F1</th><th scope="col">보류 테스트 정확도</th></tr></thead><tbody>
+<tr><th scope="row">A2 · Inception</th><td>0.8964</td><td>0.8110</td><td>83.84%</td></tr>
+<tr><th scope="row">A0 · 기본 CNN</th><td>0.8929</td><td>0.8487</td><td>90.31%</td></tr>
+<tr><th scope="row">RF · 랜덤 포레스트</th><td>0.7683</td><td>0.7560</td><td>81.38%</td></tr>
+</tbody></table></div>
+<p>Macro F1은 걷기·조깅·계단 오르기·계단 내려가기·앉기·서기의 F1을 똑같은 비중으로 평균한다. A0의 테스트 정확도가 90%를 넘었어도, 행동별 차이를 반영하는 Macro F1은 연구 참고선인 0.90에 미치지 못했다.</p>
+
+<h2 id="questions">세 연구 질문에 대한 답</h2>
+<ul>
+<li><strong>여러 시간 규모의 특징과 지름길 연결을 결합하면?</strong> B1은 residual 연결을 공유하는 A1보다 5개 fold 모두에서 높았다. 기본 CNN인 A0와의 평균 차이는 +0.33%p여서 연구계획서의 개선 기준을 충족하지 못했다.</li>
+<li><strong>중요한 특징이나 시점에 가중치를 주면?</strong> B1에 SE 또는 CBAM을 추가한 두 실험 모두 개발 Macro F1의 개선을 확인하기 어려웠다.</li>
+<li><strong>시간 합성곱을 가볍게 바꾸면?</strong> B4는 B1보다 파라미터가 56.9% 줄고 Macro F1이 0.38%p 낮아 계획한 손실 허용폭 안에 들었다. 같은 PC에서 측정한 중앙 추론시간은 0.643ms에서 0.635ms로 소폭 줄었다.</li>
+</ul>
+<h2 id="reading">보고서를 읽는 순서</h2>
+<p><a href="plan.html">연구 계획</a>에서 어떤 차이를 개선으로 인정할지 확인하고, <a href="data.html">데이터</a>에서 사람을 나누는 방식을 살펴본다. <a href="models.html">모델 설계</a>와 <a href="development.html">개발 검증</a>을 함께 읽으면 구조별 가설과 결과를 짝지어 볼 수 있다. 마지막으로 <a href="test.html">최종 테스트</a>에서 보류 사용자별 오류를, <a href="review.html">결론과 한계</a>에서 재현 자료와 후속 질문을 확인할 수 있다.</p>
+        <nav class="page-turns" aria-label="이전 및 다음 장"><a href="plan.html" class="page-turn" rel="next"><span class="page-turn-label"><span aria-hidden="true">→</span> 다음 장</span><strong>연구 계획</strong></a></nav>
+      </div>
+    </div>
+  </main>
+  <footer class="report-footer">
+    <div class="frame footer-inner">
+      <p>가천대학교 · 기계학습프로그래밍 연구 보고서</p>
+      <a href="#top">맨 위로 <span aria-hidden="true">↑</span></a>
+    </div>
+  </footer>
+</body>
+</html>

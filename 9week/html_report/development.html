@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="가천대학교 기계학습프로그래밍 수업의 WISDM 1D CNN 사람 활동 인식 연구 보고서">
+  <title>1단계 개발 검증 결과 | WISDM 연구 보고서</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <a class="skip-link" href="#report-content">본문 바로가기</a>
+  <header class="masthead" id="top">
+    <div class="masthead-inner frame">
+      <a class="wordmark" href="index.html">WISDM 연구 보고서</a>
+      <p class="course">가천대학교 · 기계학습프로그래밍</p>
+    </div>
+    <nav class="site-nav" aria-label="보고서 장">
+      <ul class="frame"><li><a href="index.html">연구 개요</a></li>
+<li><a href="plan.html">연구 계획</a></li>
+<li><a href="data.html">데이터</a></li>
+<li><a href="models.html">모델 설계</a></li>
+<li><a href="development.html" aria-current="page">개발 검증</a></li>
+<li><a href="test.html">최종 테스트</a></li>
+<li><a href="review.html">결론과 한계</a></li></ul>
+    </nav>
+  </header>
+  <main id="report-content" tabindex="-1">
+    <div class="page-hero">
+      <div class="frame">
+        <p class="page-location">개발 검증 <span aria-hidden="true">/</span> <span>5 / 7장</span></p>
+        <h1>1단계 개발 검증 결과</h1>
+      </div>
+    </div>
+    <div class="reading-layout frame">
+      <nav class="section-index" aria-label="이 장의 목차">
+      <p class="section-index-title">이 장의 목차</p>
+      <ul><li><a href="#dev-scores">개발 교차검증 점수</a></li>
+<li><a href="#paired">같은 fold끼리 비교한 구조 효과</a></li>
+<li><a href="#efficiency">CPU에서 직접 측정한 추론 시간</a></li>
+<li><a href="#errors">A2가 자주 틀린 행동과 사용자별 편차</a></li>
+<li><a href="#frozen-selection">최종 후보 고정</a></li></ul>
+    </nav>
+      <div class="report-body">
+<p class="lede">개발 30명에서 일곱 CNN을 비교한 결과, A2가 Macro F1 <strong>0.8964</strong>로 가장 높아 보류 테스트 후보로 선정됐다. A1의 기본 합성곱을 Inception으로 바꾼 B1이 사전 개선 기준을 충족했다. B4는 B1의 파라미터를 56.9% 줄이며 경량화 유지 조건을 만족했다.</p>
+
+<section aria-labelledby="dev-scores">
+  <h2 id="dev-scores">개발 교차검증 점수</h2>
+  <p>CNN 105회와 RF 15회를 집계했다. 같은 fold의 seed 세 개를 먼저 평균한 뒤, 다섯 fold의 평균과 표본 표준편차를 구했다. CNN 모두 참고선인 Macro F1 0.90에 미달했다. A2와 RF의 평균 차이는 +12.80%p이고 다섯 fold 모두 A2가 높았다. CNN은 검증 점수로 epoch를 골랐고, RF는 고정된 트리 설정으로 평가했다.</p>
+  <div class="table-wrap" tabindex="0" role="region" aria-label="모델별 개발 성능과 학습 시간">
+    <table>
+      <caption>모델별 개발 성능과 학습 시간</caption>
+      <thead><tr><th scope="col">모델</th><th scope="col">Macro F1 평균 ± 표준편차</th><th scope="col">Accuracy 평균</th><th scope="col">파라미터</th><th scope="col">CNN 학습 시간 합계 (초)</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">A0</th><td>0.8929 ± 0.0493</td><td>0.9021</td><td>84,870</td><td>707.6</td></tr>
+        <tr><th scope="row">A1</th><td>0.8881 ± 0.0461</td><td>0.8982</td><td>84,870</td><td>683.3</td></tr>
+        <tr><th scope="row">A2</th><td><strong>0.8964 ± 0.0374</strong></td><td>0.9083</td><td>36,806</td><td>1,032.9</td></tr>
+        <tr><th scope="row">B1</th><td>0.8962 ± 0.0482</td><td>0.9080</td><td>36,806</td><td>1,096.6</td></tr>
+        <tr><th scope="row">B2</th><td>0.8924 ± 0.0443</td><td>0.9084</td><td>38,998</td><td>1,160.8</td></tr>
+        <tr><th scope="row">B3</th><td>0.8945 ± 0.0399</td><td>0.9081</td><td>39,028</td><td>1,266.5</td></tr>
+        <tr><th scope="row">B4</th><td>0.8924 ± 0.0457</td><td>0.9035</td><td>15,878</td><td>1,653.8</td></tr>
+        <tr><th scope="row">RF</th><td>0.7683 ± 0.0578</td><td>0.7946</td><td>—</td><td>—</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>학습 시간은 모델별 15회 <code>model.fit</code>의 합계다. 전체 CNN에서 약 126.7분이었다. 선택 epoch와 런타임에 따라 달라지는 관측값이다.</p>
+</section>
+
+<section aria-labelledby="paired">
+  <h2 id="paired">같은 fold끼리 비교한 구조 효과</h2>
+  <p>아래 값은 같은 검증 사용자에서 모델의 Macro F1을 짝지어 뺀 결과다. 양수는 왼쪽 모델의 점수가 더 높다는 뜻이다. 표는 %p 단위로 반올림했으며 사전 판정에는 반올림 전 값을 사용했다.</p>
+  <div class="table-wrap" tabindex="0" role="region" aria-label="구조 비교의 Macro F1 차이 (%p)">
+    <table>
+      <caption>구조 비교의 Macro F1 차이 (%p)</caption>
+      <thead><tr><th scope="col">질문과 비교</th><th scope="col">Fold 0</th><th scope="col">Fold 1</th><th scope="col">Fold 2</th><th scope="col">Fold 3</th><th scope="col">Fold 4</th><th scope="col">평균</th><th scope="col">상승</th><th scope="col">판정</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Q1 · A1−A0</th><td>−0.23</td><td>−1.54</td><td>+0.61</td><td>−0.29</td><td>−0.98</td><td>−0.49</td><td>1/5</td><td>구별 불가</td></tr>
+        <tr><th scope="row">Q1 · A2−A0</th><td>+0.33</td><td>+0.20</td><td>+2.83</td><td>−0.22</td><td>−1.40</td><td>+0.35</td><td>3/5</td><td>구별 불가</td></tr>
+        <tr><th scope="row">Q1 · B1−A2</th><td>+0.23</td><td>−0.29</td><td>−1.91</td><td>+1.05</td><td>+0.83</td><td>−0.02</td><td>3/5</td><td>구별 불가</td></tr>
+        <tr><th scope="row">Q1 · B1−A1</th><td>+0.79</td><td>+1.44</td><td>+0.31</td><td>+1.12</td><td>+0.41</td><td>+0.81</td><td>5/5</td><td><strong>개선</strong></td></tr>
+        <tr><th scope="row">Q1 · B1−A0</th><td>+0.56</td><td>−0.10</td><td>+0.92</td><td>+0.84</td><td>−0.57</td><td>+0.33</td><td>3/5</td><td>구별 불가</td></tr>
+        <tr><th scope="row">Q2 · B2−B1</th><td>−0.95</td><td>+0.25</td><td>+0.50</td><td>−0.16</td><td>−1.51</td><td>−0.38</td><td>2/5</td><td>구별 불가</td></tr>
+        <tr><th scope="row">Q2 · B3−B1</th><td>−1.29</td><td>+1.26</td><td>+1.24</td><td>−0.52</td><td>−1.52</td><td>−0.17</td><td>2/5</td><td>구별 불가</td></tr>
+        <tr><th scope="row">Q2 · B3−B2</th><td>−0.34</td><td>+1.01</td><td>+0.74</td><td>−0.36</td><td>−0.01</td><td>+0.21</td><td>2/5</td><td>구별 불가</td></tr>
+        <tr><th scope="row">Q3 · B4−B1</th><td>−1.15</td><td>+0.89</td><td>−0.29</td><td>−0.64</td><td>−0.68</td><td>−0.38</td><td>1/5</td><td>구별 불가</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <h3>Q1 · Residual을 유지한 상태에서 Inception으로 바꿨을 때 개선</h3>
+  <p>B1−A1의 평균은 +0.81%p였고 모든 fold에서 상승했다. Inception을 도입하면 필터 크기, 파라미터 수, 수용 영역이 함께 바뀐다. Residual을 추가한 효과가 블록 종류에 따라 달라지는지 확인한 보조 비교 <code>(B1−A2)−(A1−A0)</code>는 평균 +0.47%p였으며, fold 2에서는 −2.52%p였다.</p>
+  <h3>Q2 · SE와 CBAM의 개선은 사전 기준에서 구별 불가</h3>
+  <p>B1에 SE 또는 CBAM을 추가한 두 비교 모두 평균이 소폭 하락했고 방향은 fold마다 달랐다. B3−B2도 개선 조건에 미달했다. CBAM과 SE는 채널 가중치를 계산하는 방식도 다르므로, 시간 가중치만의 효과를 평가하려면 B3와 시간 가중치를 제거한 B3-C의 비교가 필요하다.</p>
+  <h3>Q3 · B4는 경량화 유지 조건 충족</h3>
+  <p>B1 대비 평균 Macro F1 손실은 0.38%p로 허용폭 1.0%p 안이었다. 파라미터는 36,806개에서 15,878개로 줄었다(56.9% 감소).</p>
+</section>
+
+<section aria-labelledby="efficiency">
+  <h2 id="efficiency">CPU에서 직접 측정한 추론 시간</h2>
+  <p>AMD Ryzen 7 7730U, TensorFlow 2.22.0-rc0, 스레드 1개, 배치 1의 동일한 조건으로 측정했다. 모델별로 50회 워밍업 후 200회씩 5차례 실행했으며 출력 변환 시간을 포함했다. B4의 중앙값은 B1보다 0.008ms(1.2%) 짧았다. 이 환경에서 파라미터 감소율과 추론 시간 감소율의 크기는 달랐다.</p>
+  <div class="table-wrap" tabindex="0" role="region" aria-label="모델별 1,000회 CPU 추론 호출">
+    <table>
+      <caption>모델별 1,000회 CPU 추론 호출</caption>
+      <thead><tr><th scope="col">모델</th><th scope="col">중앙값 (ms)</th><th scope="col">제1–제3사분위수 (ms)</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">A0</th><td>0.499</td><td>0.474–0.535</td></tr>
+        <tr><th scope="row">A1</th><td>0.522</td><td>0.486–0.567</td></tr>
+        <tr><th scope="row">A2</th><td>0.634</td><td>0.593–0.671</td></tr>
+        <tr><th scope="row">B1</th><td>0.643</td><td>0.602–0.686</td></tr>
+        <tr><th scope="row">B2</th><td>0.658</td><td>0.625–0.713</td></tr>
+        <tr><th scope="row">B3</th><td>0.723</td><td>0.680–0.764</td></tr>
+        <tr><th scope="row">B4</th><td>0.635</td><td>0.593–0.674</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p><a href="sources/final/cpu_latency.json">CPU 측정 환경과 요약</a> · <a href="sources/final/cpu_latency_calls.csv">호출별 시간 CSV</a></p>
+</section>
+
+<section aria-labelledby="errors">
+  <h2 id="errors">A2가 자주 틀린 행동과 사용자별 편차</h2>
+  <p>A2의 행동별 F1은 계단 오르기에서 0.7716으로 가장 낮고 서기에서 0.9753으로 가장 높았다. 걷기를 계단 내려가기 또는 오르기로 예측한 경우가 각각 347건과 346건으로 많았다. 이 건수는 개발 검증에서 seed 세 개의 예측을 합계한 값이다.</p>
+  <figure>
+    <img src="sources/reports/figures/A2_confusion.png" alt="A2 개발 검증의 혼동행렬. 걷기와 계단 행동 사이에 오분류가 집중된다." loading="lazy">
+    <figcaption>A2의 개발 혼동행렬. 행은 실제 행동, 열은 예측 행동이며 셀의 비율은 해당 실제 행동 안에서 계산했다.</figcaption>
+  </figure>
+  <p>A2의 사용자별 정확도를 30명에게 같은 비중으로 평균하면 0.8843이었다. 25번 사용자는 0.4304, 30번은 0.5230이었다. 전체 윈도우를 합쳐 계산한 정확도와 사용자별 평균은 집계 단위가 달라 차이가 날 수 있다.</p>
+  <p><a href="sources/reports/A2_users_summary.csv">A2의 30명 사용자별 점수</a> · <a href="sources/reports/README.md">모델별 상세 보고서와 지표</a></p>
+</section>
+
+<section aria-labelledby="frozen-selection">
+  <h2 id="frozen-selection">최종 후보 고정</h2>
+  <p>A2는 사전에 정한 개발 평균 Macro F1 순위에서 1위였다. A2−A0는 +0.35%p로 사전 개선 기준에 미달했다. 순위는 어떤 구조를 보류 테스트에 가져갈지 정하고, 짝지은 비교는 개발 자료에서 구조 변경의 효과를 판단한다. 검증 점수를 가중치와 구조 선택에 사용했으므로 새 사용자의 성능은 고정한 보류 평가에서 별도로 확인했다.</p>
+  <p><a href="sources/reports/10_1%EB%8B%A8%EA%B3%84_%EA%B0%9C%EB%B0%9C_%EA%B2%80%EC%A6%9D_%EC%A2%85%ED%95%A9.md">개발 검증 종합 원문</a> · <a href="sources/final/selection.json">테스트 열람 전에 고정한 후보와 설정</a> · <a href="test.html">보류 테스트 결과</a></p>
+</section>
+        <nav class="page-turns" aria-label="이전 및 다음 장"><a href="models.html" class="page-turn" rel="prev"><span class="page-turn-label"><span aria-hidden="true">←</span> 이전 장</span><strong>모델 설계</strong></a><a href="test.html" class="page-turn" rel="next"><span class="page-turn-label"><span aria-hidden="true">→</span> 다음 장</span><strong>최종 테스트</strong></a></nav>
+      </div>
+    </div>
+  </main>
+  <footer class="report-footer">
+    <div class="frame footer-inner">
+      <p>가천대학교 · 기계학습프로그래밍 연구 보고서</p>
+      <a href="#top">맨 위로 <span aria-hidden="true">↑</span></a>
+    </div>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,9 @@
+{
+  "selection_sha256": "6c9836adbdb694d7eb70d75e9f9fdee7fd1e24b11de7abc6985f0a2838f5382e",
+  "model": "A0",
+  "seed": 0,
+  "checkpoint_sha256": "11ecbeb8b089f6137a5795b2fc7912ab85e0a73aac4c8c2b9ea72e4ff29b46ad",
+  "artifacts": {
+    "A0_seed0_predictions.npz": "29504866a070975c514feb5195275fee736984fed7ef18ed8f8e7d4258fb37f0"
+  }
+}
