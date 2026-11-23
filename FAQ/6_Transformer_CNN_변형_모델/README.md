@@ -22,13 +22,16 @@ $d_k$는 키 벡터의 차원이다. 인과 마스크 $M$은 허용한 위치에
 
 ### 0. Self Attention, Cross Attention, Scaled Dot-Product Attention, Multi-Head Attention 이란?
 
-Q는 찾으려는 정보, K는 비교할 단서, V는 가져올 내용이다. Self-attention은 같은 시퀀스에서 Q·K·V를 만들고, cross-attention은 Q와 K·V의 출처가 다르다. 예를 들어 번역 디코더는 자신의 상태로 질의하고 원문의 인코더 출력을 조회한다. Scaled dot-product attention은 $\mathrm{softmax}(QK^T/\sqrt{d_k})V$이다. 키 차원이 커질 때 점수 크기를 조절한 뒤 각 질의에서 키 방향으로 합이 1인 가중치를 만든다. Multi-head는 서로 다른 학습 투영으로 이 계산을 여러 번 수행하고 결과를 이어 붙여 다시 투영한다.
+- **Self-attention**은 같은 시퀀스에서 질의 Q, 키 K, 값 V를 만든다. 각 토큰은 자신의 질의와 다른 위치를 포함한 키들을 비교해 필요한 값을 모은다.
+- **Cross-attention**은 질의와 키·값을 서로 다른 시퀀스에서 가져온다. 번역에서는 디코더 상태가 질의가 되고 원문의 인코더 출력이 키와 값의 바탕이 된다.
+- **Scaled dot-product attention**은 위 수식처럼 질의와 키의 내적을 $\sqrt{d_k}$로 나눠 softmax에 넣는다. 차원이 커질 때 내적이 지나치게 커져 가중치가 한쪽에 쏠리는 현상을 완화한다.
+- **Multi-head attention**은 서로 다른 투영 행렬로 여러 묶음의 Q·K·V를 만들어 attention을 계산한다. 각 head의 출력을 이어 붙여 한 번 더 투영한다.
 
 ### 1. Positional Encoding은 어떻게 구현하나?
 
-원래 Transformer는 위치 p와 차원 쌍 2i, 2i+1에 대해 각도 $p/10000^{2i/d}$의 sin과 cos를 저장한 표를 쓴다. 길이 N의 입력에서 표의 앞 N행을 가져와 같은 크기 N×d의 토큰 임베딩에 더한다. 위치별 벡터를 학습하는 방법도 있으며, ViT 원형은 학습 가능한 위치 임베딩을 쓴다.
+원래 Transformer는 모델 차원 $d$와 토큰 위치 $p$로 각도 $p/10000^{2i/d}$를 계산한다. 차원 $2i$에는 이 각도의 sin, 바로 다음 차원 $2i+1$에는 cos를 넣는다. 길이 N의 입력에서 표의 앞 N행을 가져와 같은 크기 N×d의 토큰 임베딩에 더한다. 위치별 벡터를 학습하는 방법도 있으며, ViT 원형은 학습 가능한 위치 임베딩을 쓴다.
 
-### 2. Look-ahead Mask의 사용이유?
+### 2. Look-ahead mask는 왜 사용하는가?
 
 자기회귀 디코더가 다음 토큰을 예측할 때 미래의 정답을 미리 참조하면 학습과 생성 조건이 달라진다. 그래서 위치 i에서 j>i인 점수를 softmax 전에 음의 무한대로 바꾼다. 미래 위치의 가중치는 0이 되고 앞쪽 토큰은 함께 볼 수 있다.
 
@@ -106,6 +109,6 @@ Inductive bias는 새 데이터에도 통할 규칙을 고를 때 모델 구조�
 
 ## 복습할 때 확인할 점
 
-196은 토큰 수이고 임베딩 차원은 별도로 정한다. 224×224 이미지를 16×16 패치로 나눌 때 각 숫자가 무엇을 세는지 확인해 본다.
+패치 한 변을 16에서 8로 줄이면 패치 토큰 수와 전역 attention 점수 행렬의 원소 수는 각각 몇 배가 될까? 분류 토큰은 제외한다.
 
 [수업의 CNN–Transformer 결합 코드](https://github.com/MyungKyuYi/AI-class/blob/fe508cd0fdc46572dd300c0cb7b6f4346486b4b6/Resnet_Transformer.py) · [ViT](https://arxiv.org/abs/2010.11929) · [Swin](https://arxiv.org/abs/2103.14030) · [ConvNeXt](https://arxiv.org/abs/2201.03545) · [Transformer 논문](https://arxiv.org/abs/1706.03762)
